@@ -1,0 +1,5 @@
+langchain-anthropic
+langgraph 
+langchain-community
+tavily-python
+pandas
