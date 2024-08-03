@@ -1,3 +1,14 @@
 .aider*
 .env
 travel2*
+
+
+# Ignore config file
+config.toml
+
+# Ignore JSON translation files
+en-US.json
+zh-CN.json
+
+# Ignore compiled Python files
+*.pyc
