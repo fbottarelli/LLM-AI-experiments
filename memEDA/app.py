@@ -1,29 +1,23 @@
 import os
+import streamlit as st
 from dotenv import load_dotenv
-import chainlit as cl
 from langchain_openai.chat_models import ChatOpenAI
 from langchain.prompts import ChatPromptTemplate, SystemMessagePromptTemplate, MessagesPlaceholder
 from langchain_core.runnables import RunnablePassthrough
 from langgraph.prebuilt import ToolExecutor
-from langchain_core.messages import HumanMessage
+from langchain_core.messages import HumanMessage, SystemMessage
 from typing import TypedDict, Sequence
 from langchain_core.messages import BaseMessage
 
 load_dotenv()
 
-# Your existing code for setting up the LangGraph components
-# (Include all the necessary imports and function definitions)
-
-# Set model variables
-# OPENAI_BASE_URL = "https://api.openai.com/v1"
-# OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-# OPENAI_ORGANIZATION = os.getenv("OPENAI_ORGANIZATION")
-
 # Initialize LangSmith
 os.environ["LANGCHAIN_TRACING_V2"] = "true"
-# os.environ["LANGCHAIN_ENDPOINT"] = "https://api.smith.langchain.com"
 os.environ["LANGCHAIN_API_KEY"] = os.getenv("LANGCHAIN_API_KEY")
-# os.environ["LANGCHAIN_PROJECT"] = "Demos"
+
+# Streamlit page config
+st.set_page_config(page_title="EDA Assistant", page_icon="📊", layout="wide")
+st.title("EDA Assistant")
 
 
 # ### Import the prompts dictionary
@@ -292,17 +286,11 @@ graph.add_edge("action", END)
 # Compile the entire workflow as a runnable
 app = graph.compile()
 
-### CHAINLIT CONFIGURATION
-import os
-import chainlit as cl
-from langchain_core.messages import HumanMessage, SystemMessage
-from langchain_core.runnables import RunnableConfig
-
+# Streamlit UI and main application logic
 import json
 
 MEMORY_FILE = "memories.json"
 
-# Function to load memories from file
 def load_memories():
     try:
         with open(MEMORY_FILE, 'r') as f:
@@ -311,22 +299,18 @@ def load_memories():
     except (FileNotFoundError, json.JSONDecodeError):
         return {cat.value: [] for cat in Category}
 
-# Function to display memories in the chat
-async def display_memories(memories):
+def display_memories(memories):
     if not memories:
-        await cl.Message(content="No memories saved.").send()
+        st.write("No memories saved.")
         return
 
-    formatted_memories = []
+    st.subheader("Dataset Description")
     for category, items in memories.items():
-        formatted_memories.append(f"## {category.replace('_', ' ').title()}:")
-        formatted_memories.extend([f"- {item}" for item in items])
-        formatted_memories.append("")  # Add a blank line between categories
+        st.write(f"**{category.replace('_', ' ').title()}:**")
+        for item in items:
+            st.write(f"- {item}")
+        st.write("")  # Add a blank line between categories
 
-    memory_text = "\n".join(formatted_memories)
-    await cl.Message(content=f"# Dataset Description\n\n{memory_text}").send()
-
-# Function to generate a response based on the question and memories
 def generate_response(question, memories):
     context = "\n".join([f"{cat}: {', '.join(items)}" for cat, items in memories.items()])
     
@@ -345,54 +329,42 @@ def generate_response(question, memories):
     response = llm.invoke(messages)
     return response.content
 
-# Chainlit start function
-@cl.on_chat_start
-async def start():
+def main():
     memories = load_memories()
-    cl.user_session.set("memories", memories)
-    await display_memories(memories)
+    display_memories(memories)
 
-# Chainlit message handler
-@cl.on_message
-async def run_conversation(message: cl.Message):
-    memories = load_memories()  # Always load the latest memories from file
-    
-    # Prepare inputs for the LangGraph app
-    inputs = AgentState(
-        messages=[HumanMessage(content=message.content)],
-        memories=memories,
-        contains_information=""
-    )
-    
-    # Configure the LangChain callback handler
-    config = RunnableConfig(
-        callbacks=[
-            cl.LangchainCallbackHandler(
-                stream_final_answer=True,
-                to_ignore=["ChannelRead", "RunnableLambda", "ChannelWrite", "__start__", "_execute"]
+    user_input = st.text_input("Ask a question about the dataset or EDA progress:")
+    if user_input:
+        with st.spinner("Analyzing and generating response..."):
+            # Prepare inputs for the LangGraph app
+            inputs = AgentState(
+                messages=[HumanMessage(content=user_input)],
+                memories=memories,
+                contains_information=""
             )
-        ]
-    )
-    
-    # Run the LangGraph app
-    result = app.invoke(inputs, config=config)
-    
-    # Generate a response based on the question and updated memories
-    updated_memories = load_memories()
-    response = generate_response(message.content, updated_memories)
-    
-    # Send the generated response
-    await cl.Message(content=response).send()
+            
+            # Run the LangGraph app
+            result = app.invoke(inputs)
+            
+            # Generate a response based on the question and updated memories
+            updated_memories = load_memories()
+            response = generate_response(user_input, updated_memories)
+            
+            # Display the generated response
+            st.write("Response:", response)
 
-    # Display tool usage if any
-    final_message = result["messages"][-1]
-    if "tool_calls" in final_message.additional_kwargs:
-        for tool_call in final_message.additional_kwargs["tool_calls"]:
-            await cl.Message(
-                content=f"Tool used: {tool_call['function']['name']}\n"
-                        f"Input: {tool_call['function']['arguments']}"
-            ).send()
-    
-    # Display updated memories after each interaction
-    await display_memories(updated_memories)
+            # Display tool usage if any
+            final_message = result["messages"][-1]
+            if "tool_calls" in final_message.additional_kwargs:
+                st.subheader("Tools Used:")
+                for tool_call in final_message.additional_kwargs["tool_calls"]:
+                    st.write(f"Tool: {tool_call['function']['name']}")
+                    st.write(f"Input: {tool_call['function']['arguments']}")
+            
+            # Display updated memories
+            st.subheader("Updated Dataset Description")
+            display_memories(updated_memories)
+
+if __name__ == "__main__":
+    main()
 
