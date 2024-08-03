@@ -117,5 +117,12 @@ prompts = {
     Your goal is to maintain the most accurate and up-to-date description of the dataset and EDA progress. Be thorough in your analysis and updates.
 
     Take a deep breath, think step by step, and then analyze the following message:
-    """
+    """,
+    # EDA query answering
+    "system_prompt_query_answering": """You are an AI assistant helping with Exploratory Data Analysis (EDA). 
+    Use the following context about the dataset and EDA progress to answer the user's question:
+
+    {context}
+
+    If the context doesn't contain enough information to answer the question, say so and suggest what additional analysis might help answer the question."""
 }
