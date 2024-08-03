@@ -14,15 +14,6 @@ load_dotenv()
 # Your existing code for setting up the LangGraph components
 # (Include all the necessary imports and function definitions)
 
-from dotenv import load_dotenv
-import os
-
-# print pwd
-print(os.getcwd())
-
-# Load .env file
-load_dotenv()
-
 # Set model variables
 # OPENAI_BASE_URL = "https://api.openai.com/v1"
 # OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
@@ -33,6 +24,19 @@ os.environ["LANGCHAIN_TRACING_V2"] = "true"
 # os.environ["LANGCHAIN_ENDPOINT"] = "https://api.smith.langchain.com"
 os.environ["LANGCHAIN_API_KEY"] = os.getenv("LANGCHAIN_API_KEY")
 # os.environ["LANGCHAIN_PROJECT"] = "Demos"
+
+
+# ### Import the prompts dictionary
+from libs.prompts import prompts
+
+# Define the get_prompt function to retrieve prompts from the dictionary
+def get_prompt(prompts, name):
+    return prompts.get(name, f"Prompt with name '{name}' not found.")
+
+# Use the get_prompt function to retrieve the desired prompts
+system_prompt_sentinel_EDA = get_prompt(prompts, "system_prompt_memory_sentinel_EDA")
+system_prompt_memory_manager = get_prompt(prompts, "system_prompt_memory_manager_EDA")
+
 
 
 # ### Set up Agent: Memory Sentinel
@@ -47,34 +51,10 @@ from langchain.prompts import (
 from langchain_core.runnables import RunnablePassthrough
 
 
-system_prompt_initial = """
-Your job is to assess a brief chat history in order to determine if the conversation contains any details about a family's dining habits. 
-
-You are part of a team building a knowledge base regarding a family's dining habits to assist in highly customized meal planning.
-
-You play the critical role of assessing the message to determine if it contains any information worth recording in the knowledge base.
-
-You are only interested in the following categories of information:
-
-1. The family's food allergies (e.g. a dairy or soy allergy)
-2. Foods the family likes (e.g. likes pasta)
-3. Foods the family dislikes (e.g. doesn't eat mussels)
-4. Attributes about the family that may impact weekly meal planning (e.g. lives in Austin; has a husband and 2 children; has a garden; likes big lunches; etc.)
-
-When you receive a message, you perform a sequence of steps consisting of:
-
-1. Analyze the message for information.
-2. If it has any information worth recording, return TRUE. If not, return FALSE.
-
-You should ONLY RESPOND WITH TRUE OR FALSE. Absolutely no other information should be provided.
-
-Take a deep breath, think step by step, and then analyze the following message:
-"""
-
 # Get the prompt to use - you can modify this!
 prompt = ChatPromptTemplate.from_messages(
     [
-        SystemMessagePromptTemplate.from_template(system_prompt_initial),
+        SystemMessagePromptTemplate.from_template(system_prompt_sentinel_EDA),
         MessagesPlaceholder(variable_name="messages"),
         (
             "system",
@@ -102,55 +82,56 @@ from langchain.tools import StructuredTool
 from enum import Enum
 from typing import Optional
 
-
 class Category(str, Enum):
-    Food_Allergy = "Allergy"
-    Food_Like = "Like"
-    Food_Dislike = "Dislike"
-    Family_Attribute = "Attribute"
-
+    BASICS = "basics"
+    VARIABLES = "variables"
+    DATA_QUALITY = "data_quality"
+    ANALYSES = "analyses"
+    VISUALIZATIONS = "visualizations"
+    INSIGHTS = "insights"
+    NEXT_STEPS = "next_steps"
 
 class Action(str, Enum):
-    Create = "Create"
-    Update = "Update"
-    Delete = "Delete"
-
+    ADD = "add"
+    UPDATE = "update"
+    DELETE = "delete"
 
 class AddKnowledge(BaseModel):
     knowledge: str = Field(
         ...,
-        description="Condensed bit of knowledge to be saved for future reference in the format: [person(s) this is relevant to] [fact to store] (e.g. Husband doesn't like tuna; I am allergic to shellfish; etc)",
+        description="Condensed bit of information about the dataset or EDA progress to be saved or updated (e.g., 'Dataset has 1956111 rows and 8 columns', 'Correlation analysis performed between EDA_raw and medicationIntake')",
     )
     knowledge_old: Optional[str] = Field(
         None,
-        description="If updating or deleting record, the complete, exact phrase that needs to be modified",
+        description="If updating or deleting, the complete, exact phrase that needs to be modified",
     )
     category: Category = Field(
-        ..., description="Category that this knowledge belongs to"
+        ..., description="Category that this information belongs to"
     )
     action: Action = Field(
         ...,
-        description="Whether this knowledge is adding a new record, updating a record, or deleting a record",
+        description="Whether this information is adding a new record, updating a record, or deleting a record",
     )
-
 
 def modify_knowledge(
     knowledge: str,
-    category: str,
-    action: str,
+    category: Category,
+    action: Action,
     knowledge_old: str = "",
 ) -> dict:
-    print("Modifying Knowledge: ", knowledge, knowledge_old, category, action)
+    print(f"Modifying Dataset Description: {action} {category} - {knowledge}")
+    if knowledge_old:
+        print(f"Old information: {knowledge_old}")
+    # Here you would implement the logic to actually update your dataset description
+    # For now, we'll just return the new information
     return {"updated_memories": [knowledge]}
-
 
 tool_modify_knowledge = StructuredTool.from_function(
     func=modify_knowledge,
     name="Knowledge_Modifier",
-    description="Add, update, or delete a bit of knowledge",
+    description="Add, update, or delete information in the dataset description",
     args_schema=AddKnowledge,
 )
-
 
 # Set up the tools to execute them from the graph
 from langgraph.prebuilt import ToolExecutor
@@ -169,47 +150,11 @@ from langchain.prompts import (
 )
 from langchain_core.utils.function_calling import convert_to_openai_function
 
-system_prompt_initial = """
-You are a supervisor managing a team of knowledge eperts.
-
-Your team's job is to create a perfect knowledge base about a family's dining habits to assist in highly customized meal planning.
-
-The knowledge base should ultimately consist of many discrete pieces of information that add up to a rich persona (e.g. I like pasta; I am allergic to shellfish; I don't eat mussels; I live in Austin, Texas; I have a husband and 2 children aged 5 and 7).
-
-Every time you receive a message, you will evaluate if it has any information worth recording in the knowledge base.
-
-A message may contain multiple pieces of information that should be saved separately.
-
-You are only interested in the following categories of information:
-
-1. The family's food allergies (e.g. a dairy or soy allergy) - These are important to know because they can be life-threatening. Only log something as an allergy if you are certain it is an allergy and not just a dislike.
-2. Foods the family likes (e.g. likes pasta) - These are important to know because they can help you plan meals, but are not life-threatening.
-3. Foods the family dislikes (e.g. doesn't eat mussels or rarely eats beef) - These are important to know because they can help you plan meals, but are not life-threatening.
-4. Attributes about the family that may impact weekly meal planning (e.g. lives in Austin; has a husband and 2 children; has a garden; likes big lunches, etc.)
-
-When you receive a message, you perform a sequence of steps consisting of:
-
-1. Analyze the most recent Human message for information. You will see multiple messages for context, but we are only looking for new information in the most recent message.
-2. Compare this to the knowledge you already have.
-3. Determine if this is new knowledge, an update to old knowledge that now needs to change, or should result in deleting information that is not correct. It's possible that a food you previously wrote as a dislike might now be a like, or that a family member who previously liked a food now dislikes it - those examples would require an update.
-
-Here are the existing bits of information that we have about the family.
-
-```
-{memories}
-```
-
-Call the right tools to save the information, then respond with DONE. If you identiy multiple pieces of information, call everything at once. You only have one chance to call tools.
-
-I will tip you $20 if you are perfect, and I will fine you $40 if you miss any important information or change any incorrect information.
-
-Take a deep breath, think step by step, and then analyze the following message:
-"""
 
 # Get the prompt to use - you can modify this!
 prompt = ChatPromptTemplate.from_messages(
     [
-        SystemMessagePromptTemplate.from_template(system_prompt_initial),
+        SystemMessagePromptTemplate.from_template(system_prompt_memory_manager),
         MessagesPlaceholder(variable_name="messages"),
     ]
 )
