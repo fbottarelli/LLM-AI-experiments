@@ -15,3 +15,6 @@ zh-CN.json
 # ignore .file folder
 .files
 .files/*
+
+# memories 
+memories.txt
