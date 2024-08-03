@@ -113,6 +113,8 @@ class AddKnowledge(BaseModel):
         description="Whether this information is adding a new record, updating a record, or deleting a record",
     )
 
+import json
+
 def modify_knowledge(
     knowledge: str,
     category: Category,
@@ -122,9 +124,30 @@ def modify_knowledge(
     print(f"Modifying Dataset Description: {action} {category} - {knowledge}")
     if knowledge_old:
         print(f"Old information: {knowledge_old}")
-    # Here you would implement the logic to actually update your dataset description
-    # For now, we'll just return the new information
-    return {"updated_memories": [knowledge]}
+    
+    # Load existing memories
+    try:
+        with open(MEMORY_FILE, 'r') as f:
+            memories = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        memories = []
+    
+    # Modify memories based on action
+    if action == Action.ADD:
+        memories.append({"category": category, "knowledge": knowledge})
+    elif action == Action.UPDATE:
+        for item in memories:
+            if item["knowledge"] == knowledge_old:
+                item["knowledge"] = knowledge
+                break
+    elif action == Action.DELETE:
+        memories = [item for item in memories if item["knowledge"] != knowledge_old]
+    
+    # Save updated memories
+    with open(MEMORY_FILE, 'w') as f:
+        json.dump(memories, f)
+    
+    return {"updated_memories": [item["knowledge"] for item in memories]}
 
 tool_modify_knowledge = StructuredTool.from_function(
     func=modify_knowledge,
@@ -295,22 +318,21 @@ import chainlit as cl
 from langchain_core.messages import HumanMessage
 from langchain_core.runnables import RunnableConfig
 
-MEMORY_FILE = "memories.txt"
+import json
 
-def save_memories(memories):
-    with open(MEMORY_FILE, "w") as f:
-        for memory in memories:
-            f.write(f"{memory}\n")
+MEMORY_FILE = "memories.json"
 
 def load_memories():
-    if os.path.exists(MEMORY_FILE):
-        with open(MEMORY_FILE, "r") as f:
-            return [line.strip() for line in f.readlines()]
-    return []
+    try:
+        with open(MEMORY_FILE, 'r') as f:
+            memories = json.load(f)
+        return [item["knowledge"] for item in memories]
+    except (FileNotFoundError, json.JSONDecodeError):
+        return []
 
 async def display_memories(memories):
-    memory_text = "\n".join(memories) if memories else "Nessuna memoria salvata."
-    await cl.Message(content=f"## Memorie Salvate\n\n{memory_text}").send()
+    memory_text = "\n".join(memories) if memories else "No memories saved."
+    await cl.Message(content=f"## Saved Memories\n\n{memory_text}").send()
 
 @cl.on_chat_start
 async def start():
@@ -320,7 +342,7 @@ async def start():
 
 @cl.on_message
 async def run_conversation(message: cl.Message):
-    memories = cl.user_session.get("memories", [])
+    memories = load_memories()  # Always load the latest memories from file
     
     inputs = AgentState(
         messages=[HumanMessage(content=message.content)],
@@ -339,11 +361,8 @@ async def run_conversation(message: cl.Message):
     
     result = app.invoke(inputs, config=config)
     
-    if "memories" in result and isinstance(result["memories"], list):
-        updated_memories = result["memories"]
-        cl.user_session.set("memories", updated_memories)
-        save_memories(updated_memories)
-        await display_memories(updated_memories)
+    # The memories are now managed by the modify_knowledge function,
+    # so we don't need to update them here.
     
     final_message = result["messages"][-1]
     await cl.Message(content=final_message.content).send()
@@ -351,7 +370,11 @@ async def run_conversation(message: cl.Message):
     if "tool_calls" in final_message.additional_kwargs:
         for tool_call in final_message.additional_kwargs["tool_calls"]:
             await cl.Message(
-                content=f"Tool utilizzato: {tool_call['function']['name']}\n"
+                content=f"Tool used: {tool_call['function']['name']}\n"
                         f"Input: {tool_call['function']['arguments']}"
             ).send()
+    
+    # Display updated memories after each interaction
+    updated_memories = load_memories()
+    await display_memories(updated_memories)
 
