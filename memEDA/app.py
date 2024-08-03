@@ -371,7 +371,7 @@ def main():
             st.session_state.tool_calls = result["messages"][-1].additional_kwargs.get("tool_calls", [])
 
             # Rerun the app to display the new response
-            st.experimental_rerun()
+            st.rerun()
 
 if __name__ == "__main__":
     main()
