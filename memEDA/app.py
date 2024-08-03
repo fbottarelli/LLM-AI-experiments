@@ -30,6 +30,7 @@ def get_prompt(prompts, name):
 # Use the get_prompt function to retrieve the desired prompts
 system_prompt_sentinel_EDA = get_prompt(prompts, "system_prompt_memory_sentinel_EDA")
 system_prompt_memory_manager = get_prompt(prompts, "system_prompt_memory_manager_EDA")
+system_prompt_query_answering = get_prompt(prompts, "system_prompt_query_answering")
 
 
 
@@ -314,12 +315,7 @@ def display_memories(memories):
 def generate_response(question, memories):
     context = "\n".join([f"{cat}: {', '.join(items)}" for cat, items in memories.items()])
     
-    system_message = f"""You are an AI assistant helping with Exploratory Data Analysis (EDA). 
-    Use the following context about the dataset and EDA progress to answer the user's question:
-
-    {context}
-
-    If the context doesn't contain enough information to answer the question, say so and suggest what additional analysis might help answer the question."""
+    system_message = get_prompt(prompts, "system_prompt_query_answering").format(context=context)
 
     messages = [
         SystemMessage(content=system_message),
