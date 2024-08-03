@@ -309,7 +309,7 @@ app = graph.compile()
 ### CHAINLIT CONFIGURATION
 import os
 import chainlit as cl
-from langchain_core.messages import HumanMessage
+from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.runnables import RunnableConfig
 
 import json
@@ -338,6 +338,24 @@ async def display_memories(memories):
     memory_text = "\n".join(formatted_memories)
     await cl.Message(content=f"# Dataset Description\n\n{memory_text}").send()
 
+def generate_response(question, memories):
+    context = "\n".join([f"{cat}: {', '.join(items)}" for cat, items in memories.items()])
+    
+    system_message = f"""You are an AI assistant helping with Exploratory Data Analysis (EDA). 
+    Use the following context about the dataset and EDA progress to answer the user's question:
+
+    {context}
+
+    If the context doesn't contain enough information to answer the question, say so and suggest what additional analysis might help answer the question."""
+
+    messages = [
+        SystemMessage(content=system_message),
+        HumanMessage(content=question)
+    ]
+
+    response = llm.invoke(messages)
+    return response.content
+
 @cl.on_chat_start
 async def start():
     memories = load_memories()
@@ -365,12 +383,15 @@ async def run_conversation(message: cl.Message):
     
     result = app.invoke(inputs, config=config)
     
-    # The memories are now managed by the modify_knowledge function,
-    # so we don't need to update them here.
+    # Generate a response based on the question and updated memories
+    updated_memories = load_memories()
+    response = generate_response(message.content, updated_memories)
     
-    final_message = result["messages"][-1]
-    await cl.Message(content=final_message.content).send()
+    # Send the generated response
+    await cl.Message(content=response).send()
 
+    # Display tool usage if any
+    final_message = result["messages"][-1]
     if "tool_calls" in final_message.additional_kwargs:
         for tool_call in final_message.additional_kwargs["tool_calls"]:
             await cl.Message(
@@ -379,6 +400,5 @@ async def run_conversation(message: cl.Message):
             ).send()
     
     # Display updated memories after each interaction
-    updated_memories = load_memories()
     await display_memories(updated_memories)
 
