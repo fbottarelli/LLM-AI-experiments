@@ -83,12 +83,8 @@ from enum import Enum
 from typing import Optional
 
 class Category(str, Enum):
-    BASICS = "basics"
-    VARIABLES = "variables"
-    DATA_QUALITY = "data_quality"
-    ANALYSES = "analyses"
-    VISUALIZATIONS = "visualizations"
-    INSIGHTS = "insights"
+    KEY_VARIABLES = "key_variables"
+    CURRENT_EDA_STATUS = "current_eda_status"
     NEXT_STEPS = "next_steps"
 
 class Action(str, Enum):
@@ -99,7 +95,7 @@ class Action(str, Enum):
 class AddKnowledge(BaseModel):
     knowledge: str = Field(
         ...,
-        description="Condensed bit of information about the dataset or EDA progress to be saved or updated (e.g., 'Dataset has 1956111 rows and 8 columns', 'Correlation analysis performed between EDA_raw and medicationIntake')",
+        description="Structured information about the dataset or EDA progress to be saved or updated",
     )
     knowledge_old: Optional[str] = Field(
         None,
@@ -130,24 +126,23 @@ def modify_knowledge(
         with open(MEMORY_FILE, 'r') as f:
             memories = json.load(f)
     except (FileNotFoundError, json.JSONDecodeError):
-        memories = []
+        memories = {cat.value: [] for cat in Category}
     
     # Modify memories based on action
     if action == Action.ADD:
-        memories.append({"category": category, "knowledge": knowledge})
+        memories[category].append(knowledge)
     elif action == Action.UPDATE:
-        for item in memories:
-            if item["knowledge"] == knowledge_old:
-                item["knowledge"] = knowledge
-                break
+        if knowledge_old in memories[category]:
+            index = memories[category].index(knowledge_old)
+            memories[category][index] = knowledge
     elif action == Action.DELETE:
-        memories = [item for item in memories if item["knowledge"] != knowledge_old]
+        memories[category] = [item for item in memories[category] if item != knowledge_old]
     
     # Save updated memories
     with open(MEMORY_FILE, 'w') as f:
         json.dump(memories, f)
     
-    return {"updated_memories": [item["knowledge"] for item in memories]}
+    return {"updated_memories": memories}
 
 tool_modify_knowledge = StructuredTool.from_function(
     func=modify_knowledge,
@@ -326,13 +321,23 @@ def load_memories():
     try:
         with open(MEMORY_FILE, 'r') as f:
             memories = json.load(f)
-        return [item["knowledge"] for item in memories]
+        return memories
     except (FileNotFoundError, json.JSONDecodeError):
-        return []
+        return {cat.value: [] for cat in Category}
 
 async def display_memories(memories):
-    memory_text = "\n".join(memories) if memories else "No memories saved."
-    await cl.Message(content=f"## Saved Memories\n\n{memory_text}").send()
+    if not memories:
+        await cl.Message(content="No memories saved.").send()
+        return
+
+    formatted_memories = []
+    for category, items in memories.items():
+        formatted_memories.append(f"## {category.replace('_', ' ').title()}:")
+        formatted_memories.extend([f"- {item}" for item in items])
+        formatted_memories.append("")  # Add a blank line between categories
+
+    memory_text = "\n".join(formatted_memories)
+    await cl.Message(content=f"# Dataset Description\n\n{memory_text}").send()
 
 @cl.on_chat_start
 async def start():
