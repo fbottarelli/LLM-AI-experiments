@@ -1,1 +1,16 @@
-My sister is allergic to eggs
+timestamp: Unix timestamp of observations
+EDA_raw: Electrodermal Activity measurement
+medicationIntake: Indicator of medication intake (1: taken, 0: not taken)
+wearingOff: Indicator of wearing off effect (1: present, 0: absent)
+last_med_intake: Index of last medication intake event
+med_time_diff: Time since last medication intake
+last_wo: Index of last wearing off event
+wo_time_diff: Time since last wearing off event
+Initial data exploration completed
+Basic summary statistics generated for all variables
+Data transformations applied: medicationIntake and wearingOff converted to numeric
+Derived variables added: last_med_intake, med_time_diff, last_wo, wo_time_diff
+Analyze temporal patterns in EDA measurements
+Investigate relationship between medication intake and EDA
+Explore frequency and timing of wearing off events
+Create visualizations to illustrate key findings

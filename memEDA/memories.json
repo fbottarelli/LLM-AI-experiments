@@ -1,0 +1,1 @@
+{"key_variables": ["The dataset is about Parkinson's disease and uses values from a wearable device.", "The main variable is 'wearing off', a 0/1 variable, where 1 indicates wearing off as sent by the device button."], "current_eda_status": ["Initial data exploration completed"], "next_steps": []}
