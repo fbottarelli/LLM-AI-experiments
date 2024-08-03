@@ -142,7 +142,7 @@ def modify_knowledge(
     with open(MEMORY_FILE, 'w') as f:
         json.dump(memories, f)
     
-    return {"updated_memories": memories}
+    return memories  # Return the memories directly, not wrapped in a dict
 
 tool_modify_knowledge = StructuredTool.from_function(
     func=modify_knowledge,
@@ -245,7 +245,6 @@ def call_tool(state):
     memories = state["memories"]
     last_message = messages[-1]
 
-    new_memories = []
     for tool_call in last_message.additional_kwargs["tool_calls"]:
         action = ToolInvocation(
             tool=tool_call["function"]["name"],
@@ -260,9 +259,9 @@ def call_tool(state):
 
         messages.append(function_message)
         if isinstance(response, dict) and "updated_memories" in response:
-            new_memories.extend(response["updated_memories"])
+            memories = response["updated_memories"]
 
-    return {"messages": messages, "memories": memories + new_memories}
+    return {"messages": messages, "memories": memories}
 
 
 
