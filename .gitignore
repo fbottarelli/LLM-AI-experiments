@@ -12,3 +12,6 @@ zh-CN.json
 
 # Ignore compiled Python files
 *.pyc
+# ignore .file folder
+.files
+.files/*

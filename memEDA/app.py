@@ -31,7 +31,7 @@ load_dotenv()
 # Initialize LangSmith
 os.environ["LANGCHAIN_TRACING_V2"] = "true"
 # os.environ["LANGCHAIN_ENDPOINT"] = "https://api.smith.langchain.com"
-# os.environ["LANGCHAIN_API_KEY"] = os.getenv("LANGCHAIN_API_KEY")
+os.environ["LANGCHAIN_API_KEY"] = os.getenv("LANGCHAIN_API_KEY")
 # os.environ["LANGCHAIN_PROJECT"] = "Demos"
 
 
@@ -86,7 +86,7 @@ prompt = ChatPromptTemplate.from_messages(
 # Choose the LLM that will drive the agent
 llm = ChatOpenAI(
     
-    model="gpt-3.5-turbo-0125",
+    model="gpt-4o-mini",
     streaming=True,
     temperature=0.0,
 )
@@ -217,7 +217,7 @@ prompt = ChatPromptTemplate.from_messages(
 # Choose the LLM that will drive the agent
 llm = ChatOpenAI(
     # model="gpt-3.5-turbo-0125",
-    model="gpt-4-0125-preview",
+    model="gpt-4o",
     streaming=True,
     temperature=0.0,
 )
@@ -341,13 +341,25 @@ graph.add_edge("action", END)
 # We compile the entire workflow as a runnable
 app = graph.compile()
 
+
+
+### CHAINLIT CONFIGURATION
+import chainlit as cl
 from langchain_core.messages import HumanMessage
 from langchain_core.runnables import RunnableConfig
 
-### CHAINLIT CONFIGURATION
+async def update_memories_sidebar(memories):
+    """Aggiorna la sidebar con le memorie correnti."""
+    memory_text = "\n\n".join(memories) if memories else "Nessuna memoria salvata."
+    content = f"## Memorie Salvate\n\n{memory_text}"
+    
+    text_element = cl.Text(name="memories", content=content, display="side")
+    await cl.Message(content="Memorie aggiornate", elements=[text_element]).send()
+
 @cl.on_chat_start
-def start():
+async def start():
     cl.user_session.set("memories", [])  # Inizializza la memoria vuota per ogni sessione
+    await update_memories_sidebar([])
 
 @cl.on_message
 async def run_conversation(message: cl.Message):
@@ -374,7 +386,11 @@ async def run_conversation(message: cl.Message):
     result = app.invoke(inputs, config=config)
     
     # Aggiorna la memoria della sessione
-    cl.user_session.set("memories", result["memories"])
+    updated_memories = result["memories"]
+    cl.user_session.set("memories", updated_memories)
+    
+    # Aggiorna la sidebar con le nuove memorie
+    await update_memories_sidebar(updated_memories)
     
     # Invia la risposta finale all'utente
     final_message = result["messages"][-1]
