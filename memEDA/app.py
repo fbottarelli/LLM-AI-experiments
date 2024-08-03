@@ -141,7 +141,7 @@ def modify_knowledge(
     knowledge_old: str = "",
 ) -> dict:
     print("Modifying Knowledge: ", knowledge, knowledge_old, category, action)
-    return "Modified Knowledge"
+    return {"updated_memories": [knowledge]}
 
 
 tool_modify_knowledge = StructuredTool.from_function(
@@ -279,10 +279,10 @@ def call_knowledge_master(state):
 # Define the function to execute tools
 def call_tool(state):
     messages = state["messages"]
-    # We know the last message involves at least one tool call
+    memories = state["memories"]
     last_message = messages[-1]
 
-    # We loop through all tool calls and append the message to our message log
+    new_memories = []
     for tool_call in last_message.additional_kwargs["tool_calls"]:
         action = ToolInvocation(
             tool=tool_call["function"]["name"],
@@ -290,16 +290,17 @@ def call_tool(state):
             id=tool_call["id"],
         )
 
-        # We call the tool_executor and get back a response
         response = tool_executor.invoke(action)
-        # We use the response to create a FunctionMessage
         function_message = ToolMessage(
             content=str(response), name=action.tool, tool_call_id=tool_call["id"]
         )
 
-        # Add the function message to the list
         messages.append(function_message)
-    return {"messages": messages}
+        if isinstance(response, dict) and "updated_memories" in response:
+            new_memories.extend(response["updated_memories"])
+
+    return {"messages": messages, "memories": memories + new_memories}
+
 
 
 from langgraph.graph import StateGraph, END
@@ -348,31 +349,59 @@ import chainlit as cl
 from langchain_core.messages import HumanMessage
 from langchain_core.runnables import RunnableConfig
 
-async def update_memories_sidebar(memories):
-    """Aggiorna la sidebar con le memorie correnti."""
-    memory_text = "\n\n".join(memories) if memories else "Nessuna memoria salvata."
-    content = f"## Memorie Salvate\n\n{memory_text}"
-    
-    text_element = cl.Text(name="memories", content=content, display="side")
-    await cl.Message(content="Memorie aggiornate", elements=[text_element]).send()
+
+MEMORY_FILE = "memories.txt"
+
+def save_memories(memories):
+    print(f"DEBUG: Attempting to save memories: {memories}")
+    try:
+        with open(MEMORY_FILE, "w") as f:
+            for memory in memories:
+                f.write(f"{memory}\n")
+        print(f"DEBUG: Memories saved successfully to {MEMORY_FILE}")
+    except Exception as e:
+        print(f"DEBUG: Error saving memories: {e}")
+
+def load_memories():
+    print(f"DEBUG: Attempting to load memories from {MEMORY_FILE}")
+    if os.path.exists(MEMORY_FILE):
+        try:
+            with open(MEMORY_FILE, "r") as f:
+                memories = [line.strip() for line in f.readlines()]
+            print(f"DEBUG: Memories loaded: {memories}")
+            return memories
+        except Exception as e:
+            print(f"DEBUG: Error loading memories: {e}")
+    else:
+        print("DEBUG: Memory file does not exist")
+    return []
+
+async def display_memories(memories):
+    print(f"DEBUG: Displaying memories: {memories}")
+    memory_text = "\n".join(memories) if memories else "Nessuna memoria salvata."
+    await cl.Message(content=f"## Memorie Salvate\n\n{memory_text}").send()
 
 @cl.on_chat_start
 async def start():
-    cl.user_session.set("memories", [])  # Inizializza la memoria vuota per ogni sessione
-    await update_memories_sidebar([])
+    print("DEBUG: Chat started")
+    memories = load_memories()
+    cl.user_session.set("memories", memories)
+    print(f"DEBUG: Initial memories set in user session: {memories}")
+    await display_memories(memories)
 
 @cl.on_message
 async def run_conversation(message: cl.Message):
-    memories = cl.user_session.get("memories")
+    print(f"DEBUG: Received message: {message.content}")
+    memories = cl.user_session.get("memories", [])
+    print(f"DEBUG: Current memories before processing: {memories}")
     
-    # Prepara l'input per il tuo grafo LangGraph
     inputs = AgentState(
         messages=[HumanMessage(content=message.content)],
         memories=memories,
-        contains_information=""  # Questo verrà impostato dal nodo sentinel
+        contains_information=""
     )
+    print(f"DEBUG: Inputs prepared for LangGraph: {inputs}")
     
-    # Configura il callback handler di Chainlit
     config = RunnableConfig(
         callbacks=[
             cl.LangchainCallbackHandler(
@@ -382,24 +411,31 @@ async def run_conversation(message: cl.Message):
         ]
     )
     
-    # Esegui il grafo LangGraph
+    print("DEBUG: Invoking LangGraph app")
     result = app.invoke(inputs, config=config)
+    print(f"DEBUG: Result from app.invoke: {result}")
     
-    # Aggiorna la memoria della sessione
-    updated_memories = result["memories"]
-    cl.user_session.set("memories", updated_memories)
+    if "memories" in result and isinstance(result["memories"], list):
+        updated_memories = result["memories"]
+        print(f"DEBUG: Updated memories from result: {updated_memories}")
+        cl.user_session.set("memories", updated_memories)
+        save_memories(updated_memories)
+        await display_memories(updated_memories)
+    else:
+        print("DEBUG: No valid memories found in the result")
     
-    # Aggiorna la sidebar con le nuove memorie
-    await update_memories_sidebar(updated_memories)
-    
-    # Invia la risposta finale all'utente
     final_message = result["messages"][-1]
+    print(f"DEBUG: Final message: {final_message.content}")
     await cl.Message(content=final_message.content).send()
 
-    # Se ci sono tool calls, mostra i dettagli
     if "tool_calls" in final_message.additional_kwargs:
+        print("DEBUG: Tool calls found in final message")
         for tool_call in final_message.additional_kwargs["tool_calls"]:
+            print(f"DEBUG: Tool call - Name: {tool_call['function']['name']}, Arguments: {tool_call['function']['arguments']}")
             await cl.Message(
                 content=f"Tool utilizzato: {tool_call['function']['name']}\n"
                         f"Input: {tool_call['function']['arguments']}"
             ).send()
+
+    final_memories = cl.user_session.get("memories", [])
+    print(f"DEBUG: Final memories in user session: {final_memories}")
