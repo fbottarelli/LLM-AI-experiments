@@ -333,7 +333,27 @@ def main():
     memories = load_memories()
     display_memories(memories)
 
-    user_input = st.text_input("Ask a question about the dataset or EDA progress:")
+    # Initialize session state for user input if it doesn't exist
+    if 'user_input' not in st.session_state:
+        st.session_state.user_input = ""
+
+    # Display previous response if it exists
+    if 'response' in st.session_state:
+        st.write("Response:", st.session_state.response)
+
+        # Display tool usage if any
+        if 'tool_calls' in st.session_state:
+            st.subheader("Tools Used:")
+            for tool_call in st.session_state.tool_calls:
+                st.write(f"Tool: {tool_call['function']['name']}")
+                st.write(f"Input: {tool_call['function']['arguments']}")
+        
+        # Display updated memories
+        st.subheader("Updated Dataset Description")
+        display_memories(load_memories())
+
+    # User input section
+    user_input = st.text_input("Ask a question about the dataset or EDA progress:", key="user_input")
     if user_input:
         with st.spinner("Analyzing and generating response..."):
             # Prepare inputs for the LangGraph app
@@ -350,20 +370,12 @@ def main():
             updated_memories = load_memories()
             response = generate_response(user_input, updated_memories)
             
-            # Display the generated response
-            st.write("Response:", response)
+            # Store the response and tool calls in session state
+            st.session_state.response = response
+            st.session_state.tool_calls = result["messages"][-1].additional_kwargs.get("tool_calls", [])
 
-            # Display tool usage if any
-            final_message = result["messages"][-1]
-            if "tool_calls" in final_message.additional_kwargs:
-                st.subheader("Tools Used:")
-                for tool_call in final_message.additional_kwargs["tool_calls"]:
-                    st.write(f"Tool: {tool_call['function']['name']}")
-                    st.write(f"Input: {tool_call['function']['arguments']}")
-            
-            # Display updated memories
-            st.subheader("Updated Dataset Description")
-            display_memories(updated_memories)
+            # Rerun the app to display the new response
+            st.experimental_rerun()
 
 if __name__ == "__main__":
     main()
