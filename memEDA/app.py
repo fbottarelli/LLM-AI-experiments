@@ -41,7 +41,7 @@ system_prompt_memory_manager = get_prompt(prompts, "system_prompt_memory_manager
 
 # ### Set up Agent: Memory Sentinel
 
-
+# Import necessary modules
 from langchain_openai.chat_models import ChatOpenAI
 from langchain.prompts import (
     ChatPromptTemplate,
@@ -50,8 +50,7 @@ from langchain.prompts import (
 )
 from langchain_core.runnables import RunnablePassthrough
 
-
-# Get the prompt to use - you can modify this!
+# Define the prompt for the Memory Sentinel
 prompt = ChatPromptTemplate.from_messages(
     [
         SystemMessagePromptTemplate.from_template(system_prompt_sentinel_EDA),
@@ -63,25 +62,25 @@ prompt = ChatPromptTemplate.from_messages(
     ]
 )
 
-# Choose the LLM that will drive the agent
+# Initialize the LLM for the Memory Sentinel
 llm = ChatOpenAI(
-    
     model="gpt-4o-mini",
     streaming=True,
     temperature=0.0,
 )
 
+# Create the runnable for the Memory Sentinel
 sentinel_runnable = {"messages": RunnablePassthrough()} | prompt | llm
-
 
 # ### Set up Agent: Memory Manager
 
-
+# Import necessary modules and define data structures
 from langchain.pydantic_v1 import BaseModel, Field
 from langchain.tools import StructuredTool
 from enum import Enum
 from typing import Optional
 
+# Define enums for categories and actions
 class Category(str, Enum):
     KEY_VARIABLES = "key_variables"
     CURRENT_EDA_STATUS = "current_eda_status"
@@ -92,6 +91,7 @@ class Action(str, Enum):
     UPDATE = "update"
     DELETE = "delete"
 
+# Define the structure for adding knowledge
 class AddKnowledge(BaseModel):
     knowledge: str = Field(
         ...,
@@ -111,6 +111,7 @@ class AddKnowledge(BaseModel):
 
 import json
 
+# Function to modify the knowledge base
 def modify_knowledge(
     knowledge: str,
     category: Category,
@@ -144,6 +145,7 @@ def modify_knowledge(
     
     return memories  # Return the memories directly, not wrapped in a dict
 
+# Create a tool for modifying knowledge
 tool_modify_knowledge = StructuredTool.from_function(
     func=modify_knowledge,
     name="Knowledge_Modifier",
@@ -159,7 +161,7 @@ agent_tools = [tool_modify_knowledge]
 
 tool_executor = ToolExecutor(agent_tools)
 
-
+# Import necessary modules for the Memory Manager
 from langchain_openai.chat_models import ChatOpenAI
 from langchain.prompts import (
     ChatPromptTemplate,
@@ -168,8 +170,7 @@ from langchain.prompts import (
 )
 from langchain_core.utils.function_calling import convert_to_openai_function
 
-
-# Get the prompt to use - you can modify this!
+# Define the prompt for the Memory Manager
 prompt = ChatPromptTemplate.from_messages(
     [
         SystemMessagePromptTemplate.from_template(system_prompt_memory_manager),
@@ -177,9 +178,8 @@ prompt = ChatPromptTemplate.from_messages(
     ]
 )
 
-# Choose the LLM that will drive the agent
+# Initialize the LLM for the Memory Manager
 llm = ChatOpenAI(
-    # model="gpt-3.5-turbo-0125",
     model="gpt-4o",
     streaming=True,
     temperature=0.0,
@@ -188,48 +188,40 @@ llm = ChatOpenAI(
 # Create the tools to bind to the model
 tools = [convert_to_openai_function(t) for t in agent_tools]
 
+# Create the runnable for the Memory Manager
 knowledge_master_runnable = prompt | llm.bind_tools(tools)
-
 
 # ### Set up the Graph
 
-
+# Import necessary modules for the graph
 from typing import TypedDict, Sequence
 from langchain_core.messages import BaseMessage
 
-
+# Define the state structure for the agent
 class AgentState(TypedDict):
-    # The list of previous messages in the conversation
-    messages: Sequence[BaseMessage]
-    # The long-term memories to remember
-    memories: Sequence[str]
-    # Whether the information is relevant
-    contains_information: str
-
+    messages: Sequence[BaseMessage]  # The list of previous messages in the conversation
+    memories: Sequence[str]  # The long-term memories to remember
+    contains_information: str  # Whether the information is relevant
 
 import json
 from langchain_core.messages import ToolMessage
 from langgraph.prebuilt import ToolInvocation
 
-
+# Function to call the Memory Sentinel
 def call_sentinel(state):
     messages = state["messages"]
     response = sentinel_runnable.invoke(messages)
     return {"contains_information": "TRUE" in response.content and "yes" or "no"}
 
-
-# Define the function that determines whether to continue or not
+# Function to determine whether to continue or not
 def should_continue(state):
     last_message = state["messages"][-1]
-    # If there are no tool calls, then we finish
     if "tool_calls" not in last_message.additional_kwargs:
         return "end"
-    # Otherwise, we continue
     else:
         return "continue"
 
-
-# Define the function that calls the knowledge master
+# Function to call the Memory Manager
 def call_knowledge_master(state):
     messages = state["messages"]
     memories = state["memories"]
@@ -238,8 +230,7 @@ def call_knowledge_master(state):
     )
     return {"messages": messages + [response]}
 
-
-# Define the function to execute tools
+# Function to execute tools
 def call_tool(state):
     messages = state["messages"]
     memories = state["memories"]
@@ -263,24 +254,21 @@ def call_tool(state):
 
     return {"messages": messages, "memories": memories}
 
-
-
+# Import necessary modules for the graph
 from langgraph.graph import StateGraph, END
 
 # Initialize a new graph
 graph = StateGraph(AgentState)
 
-# Define the two "Nodes"" we will cycle between
+# Define the nodes in the graph
 graph.add_node("sentinel", call_sentinel)
 graph.add_node("knowledge_master", call_knowledge_master)
 graph.add_node("action", call_tool)
 
-# Define all our Edges
-
-# Set the Starting Edge
+# Set the starting edge
 graph.set_entry_point("sentinel")
 
-# We now add Conditional Edges
+# Add conditional edges
 graph.add_conditional_edges(
     "sentinel",
     lambda x: x["contains_information"],
@@ -298,13 +286,11 @@ graph.add_conditional_edges(
     },
 )
 
-# We now add Normal Edges that should always be called after another
+# Add normal edge
 graph.add_edge("action", END)
 
-# We compile the entire workflow as a runnable
+# Compile the entire workflow as a runnable
 app = graph.compile()
-
-
 
 ### CHAINLIT CONFIGURATION
 import os
@@ -316,6 +302,7 @@ import json
 
 MEMORY_FILE = "memories.json"
 
+# Function to load memories from file
 def load_memories():
     try:
         with open(MEMORY_FILE, 'r') as f:
@@ -324,6 +311,7 @@ def load_memories():
     except (FileNotFoundError, json.JSONDecodeError):
         return {cat.value: [] for cat in Category}
 
+# Function to display memories in the chat
 async def display_memories(memories):
     if not memories:
         await cl.Message(content="No memories saved.").send()
@@ -338,6 +326,7 @@ async def display_memories(memories):
     memory_text = "\n".join(formatted_memories)
     await cl.Message(content=f"# Dataset Description\n\n{memory_text}").send()
 
+# Function to generate a response based on the question and memories
 def generate_response(question, memories):
     context = "\n".join([f"{cat}: {', '.join(items)}" for cat, items in memories.items()])
     
@@ -356,22 +345,26 @@ def generate_response(question, memories):
     response = llm.invoke(messages)
     return response.content
 
+# Chainlit start function
 @cl.on_chat_start
 async def start():
     memories = load_memories()
     cl.user_session.set("memories", memories)
     await display_memories(memories)
 
+# Chainlit message handler
 @cl.on_message
 async def run_conversation(message: cl.Message):
     memories = load_memories()  # Always load the latest memories from file
     
+    # Prepare inputs for the LangGraph app
     inputs = AgentState(
         messages=[HumanMessage(content=message.content)],
         memories=memories,
         contains_information=""
     )
     
+    # Configure the LangChain callback handler
     config = RunnableConfig(
         callbacks=[
             cl.LangchainCallbackHandler(
@@ -381,6 +374,7 @@ async def run_conversation(message: cl.Message):
         ]
     )
     
+    # Run the LangGraph app
     result = app.invoke(inputs, config=config)
     
     # Generate a response based on the question and updated memories
