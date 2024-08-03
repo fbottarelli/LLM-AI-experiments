@@ -74,13 +74,9 @@ prompts = {
 
     You are only interested in the following categories of information:
 
-    1. Dataset basics (e.g., name, size, number of rows and columns)
-    2. Key variables and their descriptions
-    3. Data quality issues or preprocessing steps taken
-    4. Analyses performed and their results
-    5. Visualizations created
-    6. Insights gained
-    7. Next steps or future directions for the analysis
+    1. Key variables and their descriptions
+    2. Current EDA status (including analyses performed, visualizations created, and insights gained)
+    3. Next steps or future directions for the analysis
 
     When you receive a message, you perform a sequence of steps consisting of:
 
@@ -105,13 +101,9 @@ prompts = {
 
     You should focus on the following categories of information:
 
-    1. Dataset basics (name, size, number of rows and columns)
-    2. Key variables and their descriptions
-    3. Data quality issues or preprocessing steps taken
-    4. Analyses performed and their results
-    5. Visualizations created
-    6. Insights gained
-    7. Next steps or future directions for the analysis
+    1. Key variables and their descriptions
+    2. Current EDA status (including analyses performed, visualizations created, and insights gained)
+    3. Next steps or future directions for the analysis
 
     Here is the current dataset description:
     ```
