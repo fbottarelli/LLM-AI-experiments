@@ -40,7 +40,7 @@ prompt = ChatPromptTemplate.from_messages(
 )
 
 llm = ChatOpenAI(
-    model="gpt-4-0613",
+    model="gpt-4o-mini",
     streaming=True,
     temperature=0.0,
 )
@@ -146,7 +146,7 @@ prompt = ChatPromptTemplate.from_messages(
 )
 
 llm = ChatOpenAI(
-    model="gpt-4-0613",
+    model="gpt-4o",
     streaming=True,
     temperature=0.0,
 )
