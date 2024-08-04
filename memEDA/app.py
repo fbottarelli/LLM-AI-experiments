@@ -68,6 +68,7 @@ class Action(str, Enum):
     UPDATE = "update"
     DELETE = "delete"
 
+# Define the structure for adding knowledge
 class AddKnowledge(BaseModel):
     knowledge: str = Field(
         ...,
@@ -89,6 +90,7 @@ import json
 
 MEMORY_FILE = "memories.json"
 
+# Function to modify the knowledge base
 def modify_knowledge(
     knowledge: str,
     category: Category,
@@ -99,6 +101,7 @@ def modify_knowledge(
     if knowledge_old:
         print(f"Old information: {knowledge_old}")
     
+    # Load existing memories or create new if file doesn't exist
     try:
         with open(MEMORY_FILE, 'r') as f:
             memories = json.load(f)
@@ -110,6 +113,7 @@ def modify_knowledge(
         if cat.value not in memories:
             memories[cat.value] = []
     
+    # Perform the requested action (ADD, UPDATE, or DELETE)
     if action == Action.ADD:
         memories[category].append(knowledge)
     elif action == Action.UPDATE:
@@ -122,11 +126,13 @@ def modify_knowledge(
     elif action == Action.DELETE:
         memories[category] = [item for item in memories[category] if item != knowledge_old]
     
+    # Save updated memories back to file
     with open(MEMORY_FILE, 'w') as f:
         json.dump(memories, f)
     
     return memories
 
+# Create a StructuredTool from the modify_knowledge function
 tool_modify_knowledge = StructuredTool.from_function(
     func=modify_knowledge,
     name="Knowledge_Modifier",
@@ -134,8 +140,10 @@ tool_modify_knowledge = StructuredTool.from_function(
     args_schema=AddKnowledge,
 )
 
+# Create a list of tools (currently only one)
 agent_tools = [tool_modify_knowledge]
 
+# Create a ToolExecutor with the list of tools
 tool_executor = ToolExecutor(agent_tools)
 
 prompt = ChatPromptTemplate.from_messages(
