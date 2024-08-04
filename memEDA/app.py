@@ -54,6 +54,8 @@ from enum import Enum
 from typing import Optional
 
 class Category(str, Enum):
+    DATASET_DESCRIPTION = "dataset_description"
+    ANALYSIS_GOALS = "analysis_goals"
     KEY_VARIABLES = "key_variables"
     CURRENT_EDA_STATUS = "current_eda_status"
     NEXT_STEPS = "next_steps"
