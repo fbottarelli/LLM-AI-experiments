@@ -268,12 +268,14 @@ def start():
 async def main(message: cl.Message):
     memories = cl.user_session.get("memories")
     
-    # Display current memories
+    # Display current memories in a collapsible format
     await cl.Message(content="Current Dataset Description:").send()
+    elements = []
     for category, items in memories.items():
-        await cl.Message(content=f"**{category.replace('_', ' ').title()}:**").send()
-        for item in items:
-            await cl.Message(content=f"- {item}").send()
+        if items:
+            content = "\n".join([f"- {item}" for item in items])
+            elements.append(cl.Text(name=category.replace('_', ' ').title(), content=content, language="markdown"))
+    await cl.Message(content="", elements=elements).send()
     
     # Prepare inputs for the LangGraph app
     inputs = AgentState(
@@ -298,10 +300,12 @@ async def main(message: cl.Message):
     # Display updated memories if they've changed
     if updated_memories != memories:
         await cl.Message(content="Updated Dataset Description:").send()
+        updated_elements = []
         for category, items in updated_memories.items():
-            await cl.Message(content=f"**{category.replace('_', ' ').title()}:**").send()
-            for item in items:
-                await cl.Message(content=f"- {item}").send()
+            if items:
+                content = "\n".join([f"- {item}" for item in items])
+                updated_elements.append(cl.Text(name=category.replace('_', ' ').title(), content=content, language="markdown"))
+        await cl.Message(content="", elements=updated_elements).send()
 
 if __name__ == "__main__":
     cl.run()
