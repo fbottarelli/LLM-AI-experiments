@@ -106,6 +106,9 @@ def modify_knowledge(
         if knowledge_old in memories[category]:
             index = memories[category].index(knowledge_old)
             memories[category][index] = knowledge
+        else:
+            # If the old knowledge is not found, add the new knowledge
+            memories[category].append(knowledge)
     elif action == Action.DELETE:
         memories[category] = [item for item in memories[category] if item != knowledge_old]
     
