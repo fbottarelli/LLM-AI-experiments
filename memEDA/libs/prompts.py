@@ -77,6 +77,11 @@ prompts = {
     1. Key variables and their descriptions
     2. Current EDA status (including analyses performed, visualizations created, and insights gained)
     3. Next steps or future directions for the analysis
+    4. Data quality issues (such as missing values, outliers, or inconsistencies)
+    5. Statistical summaries of important variables
+    6. Key insights or findings from the EDA
+    7. External factors that might influence the data or analysis
+    8. Data sources and their origins
 
     When you receive a message, you perform a sequence of steps consisting of:
 
@@ -104,6 +109,11 @@ prompts = {
     1. Key variables and their descriptions
     2. Current EDA status (including analyses performed, visualizations created, and insights gained)
     3. Next steps or future directions for the analysis
+    4. Data quality issues (such as missing values, outliers, or inconsistencies)
+    5. Statistical summaries of important variables
+    6. Key insights or findings from the EDA
+    7. External factors that might influence the data or analysis
+    8. Data sources and their origins
 
     Here is the current dataset description:
     ```

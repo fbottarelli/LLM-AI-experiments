@@ -57,6 +57,11 @@ class Category(str, Enum):
     KEY_VARIABLES = "key_variables"
     CURRENT_EDA_STATUS = "current_eda_status"
     NEXT_STEPS = "next_steps"
+    DATA_QUALITY_ISSUES = "data_quality_issues"
+    STATISTICAL_SUMMARIES = "statistical_summaries"
+    INSIGHTS = "insights"
+    EXTERNAL_FACTORS = "external_factors"
+    DATA_SOURCES = "data_sources"
 
 class Action(str, Enum):
     ADD = "add"
@@ -99,6 +104,11 @@ def modify_knowledge(
             memories = json.load(f)
     except (FileNotFoundError, json.JSONDecodeError):
         memories = {cat.value: [] for cat in Category}
+    
+    # Ensure all categories exist in the memories
+    for cat in Category:
+        if cat.value not in memories:
+            memories[cat.value] = []
     
     if action == Action.ADD:
         memories[category].append(knowledge)
