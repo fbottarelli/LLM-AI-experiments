@@ -14,7 +14,7 @@ ydl_opts = {
     'write-info-json': True,  # Save metadata including chapter info
     'embed-chapters': True,    # Embed chapter info into the audio file
     'outtmpl': {
-        'default': '%(title)s'.replace(' ', '_') + '.%(ext)s'  # Output filename template without spaces
+        'default': 'youtube_dub/media/%(title)s'.replace(' ', '_') + '.%(ext)s'  # Output filename template without spaces in the media directory
     },
 }
 
@@ -34,7 +34,7 @@ def print_chapters(info_dict):
     
     # Save chapters to a JSON file
     title = info_dict['title'].replace(' ', '_')
-    with open(f"{title}_chapters.json", 'w') as f:
+    with open(f"youtube_dub/media/{title}_chapters.json", 'w') as f:
         json.dump(chapters, f, indent=4)
 
 # Process each URL
