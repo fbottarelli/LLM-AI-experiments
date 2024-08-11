@@ -43,7 +43,6 @@ def process_urls(urls):
         for url in urls:
             info_dict = ydl.extract_info(url, download=False)
             title = info_dict['title'].replace(' ', '_')
-            ydl.params['outtmpl']['default'] = f"{title}.%(ext)s"
             ydl.download([url])
             print_chapters(info_dict)
 
