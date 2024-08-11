@@ -16,7 +16,9 @@ def download_youtube_video(url):
         yt = YouTube(url)
         stream = yt.streams.filter(file_extension='mp4').get_highest_resolution()
         video_title = yt.title
+        print(f"Downloading {video_title}...")
         stream.download(filename=f"{video_title}.mp4")
+        print(f"Downloaded {video_title} successfully.")
         return video_title
     except Exception as e:
         print(f"Download error: {e}")
