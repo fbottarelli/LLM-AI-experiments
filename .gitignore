@@ -21,3 +21,6 @@ memories.txt
 
 # ignore export_env.sh
 export_env.sh
+
+# twitter bookmarks
+tweets*.json
