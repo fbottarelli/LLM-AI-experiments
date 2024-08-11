@@ -24,3 +24,6 @@ export_env.sh
 
 # twitter bookmarks
 tweets*.json
+
+# media
+*.m4a
