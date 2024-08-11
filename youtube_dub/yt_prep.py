@@ -1,18 +1,30 @@
 import os
+import subprocess
 import youtube_dl
 from moviepy.editor import VideoFileClip
 from pydub import AudioSegment
 from pydub.utils import make_chunks
+
+def update_youtube_dl():
+    try:
+        subprocess.run(['pip', 'install', '--upgrade', 'youtube-dl'], check=True)
+    except subprocess.CalledProcessError as e:
+        print(f"Failed to update youtube-dl: {e}")
+        exit(1)
 def download_youtube_video(url):
     ydl_opts = {
         'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
         'outtmpl': '%(title)s.%(ext)s',
     }
-    with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-        ydl.download([url])
-        info_dict = ydl.extract_info(url, download=False)
-        video_title = info_dict.get('title', None)
-    return video_title
+    try:
+        with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+            ydl.download([url])
+            info_dict = ydl.extract_info(url, download=False)
+            video_title = info_dict.get('title', None)
+        return video_title
+    except youtube_dl.utils.DownloadError as e:
+        print(f"Download error: {e}")
+        exit(1)
 
 def extract_audio(video_title):
     video_path = f"{video_title}.mp4"
@@ -32,10 +44,12 @@ def split_audio(audio_path, chunk_length_ms=10000):
     os.remove(audio_path)
 
 def main():
+    update_youtube_dl()
     url = input("Please enter the YouTube video URL: ")
     video_title = download_youtube_video(url)
-    audio_path = extract_audio(video_title)
-    split_audio(audio_path)
+    if video_title:
+        audio_path = extract_audio(video_title)
+        split_audio(audio_path)
 
 if __name__ == "__main__":
     main()
