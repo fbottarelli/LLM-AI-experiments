@@ -13,7 +13,9 @@ ydl_opts = {
     }],
     'write-info-json': True,  # Save metadata including chapter info
     'embed-chapters': True,    # Embed chapter info into the audio file
-    'outtmpl': '%(title)s'.replace(' ', '_') + '.%(ext)s',  # Output filename template without spaces
+    'outtmpl': {
+        'default': '%(title)s'.replace(' ', '_') + '.%(ext)s'  # Output filename template without spaces
+    },
 }
 
 # Function to extract and print chapter information
@@ -41,7 +43,7 @@ def process_urls(urls):
         for url in urls:
             info_dict = ydl.extract_info(url, download=False)
             title = info_dict['title'].replace(' ', '_')
-            ydl.params['outtmpl'] = f"{title}.%(ext)s"
+            ydl.params['outtmpl']['default'] = f"{title}.%(ext)s"
             ydl.download([url])
             print_chapters(info_dict)
 
