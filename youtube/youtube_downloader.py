@@ -6,6 +6,7 @@ from pydub import AudioSegment
 
 # List of URLs to process
 URLS = ["https://www.youtube.com/watch?v=ZJlfF1ESXVw&t=1750s"]
+folder = "youtube/media"
 
 # Define options for yt-dlp
 ydl_opts = {
@@ -17,7 +18,7 @@ ydl_opts = {
     }],
     'writeinfojson': True,
     'outtmpl': {
-        'default': 'youtube_dub/media/%(title)s.%(ext)s'
+        'default': f'{folder}/%(title)s.%(ext)s'
     },
 }
 
@@ -40,23 +41,23 @@ def print_chapters(info_dict, sanitized_title):
         print("No chapters found.")
     
     # Save chapters to a JSON file
-    with open(f"youtube_dub/media/{sanitized_title}_chapters.json", 'w') as f:
+    with open(f"{folder}/{sanitized_title}_chapters.json", 'w') as f:
         json.dump(chapters, f, indent=4)
 
 # Function to split audio by chapters
 def split_audio_by_chapters(sanitized_title):
-    audio = AudioSegment.from_file(f"youtube_dub/media/{sanitized_title}.m4a", format="m4a")
-    with open(f"youtube_dub/media/{sanitized_title}_chapters.json", 'r') as f:
+    audio = AudioSegment.from_file(f"{folder}/{sanitized_title}.m4a", format="m4a")
+    with open(f"{folder}/{sanitized_title}_chapters.json", 'r') as f:
         chapters = json.load(f)
     
-    if not os.path.exists(f"youtube_dub/media/{sanitized_title}_chapters"):
-        os.makedirs(f"youtube_dub/media/{sanitized_title}_chapters")
+    if not os.path.exists(f"{folder}/{sanitized_title}_chapters"):
+        os.makedirs(f"{folder}/{sanitized_title}_chapters")
     
     for i, chapter in enumerate(chapters):
         start_time = int(chapter['start_time'] * 1000)  # pydub works in milliseconds
         end_time = int(chapters[i + 1]['start_time'] * 1000) if i + 1 < len(chapters) else len(audio)
         chapter_audio = audio[start_time:end_time]
-        output_file = f"youtube_dub/media/{sanitized_title}_chapters/{sanitize_filename(chapter['title'])}.m4a"
+        output_file = f"{folder}/{sanitized_title}_chapters/{sanitize_filename(chapter['title'])}.m4a"
         chapter_audio.export(output_file, format="mp4", codec="aac")
 
 def process_urls(urls):
@@ -67,8 +68,8 @@ def process_urls(urls):
             sanitized_title = sanitize_filename(original_title)
             
             # Rename the downloaded file if necessary
-            original_path = f"youtube_dub/media/{original_title}.m4a"
-            sanitized_path = f"youtube_dub/media/{sanitized_title}.m4a"
+            original_path = f"{folder}/{original_title}.m4a"
+            sanitized_path = f"{folder}/{sanitized_title}.m4a"
             if os.path.exists(original_path) and original_path != sanitized_path:
                 os.rename(original_path, sanitized_path)
             
