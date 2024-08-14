@@ -4,6 +4,8 @@ import os
 import re
 from pydub import AudioSegment
 
+from
+
 # List of URLs to process
 URLS = ["https://www.youtube.com/watch?v=ZJlfF1ESXVw&t=1750s"]
 folder = "youtube/media"
@@ -23,9 +25,7 @@ ydl_opts = {
 }
 
 def sanitize_filename(filename):
-    # Remove or replace characters that are problematic in filenames
-    filename = re.sub(r'[^\w\-_\. ]', '', filename)
-    filename = filename.replace(' ', '_')
+
     return filename
 
 # Function to extract and print chapter information
