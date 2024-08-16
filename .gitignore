@@ -27,3 +27,9 @@ tweets*.json
 
 # media
 *.m4a
+
+# Ignore client secret google
+client_secret*.json
+token.pickle
+# Email downloaded
+emails.json
