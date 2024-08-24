@@ -33,3 +33,10 @@ client_secret*.json
 token.pickle
 # Email downloaded
 emails.json
+
+# data folders
+data/
+
+# ignore venv and .uv folder 
+.uv/
+.venv/
