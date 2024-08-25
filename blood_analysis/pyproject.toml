@@ -9,6 +9,7 @@ dependencies = [
     "python-dotenv>=1.0.1",
     "jupyter>=1.0.0",
     "ipykernel>=6.29.5",
+    "streamlit>=1.37.1",
 ]
 
 [build-system]
