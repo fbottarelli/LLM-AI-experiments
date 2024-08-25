@@ -14,7 +14,7 @@ client = anthropic.Anthropic()
 def load_test_names():
     with open('data/data.json') as f:
         data = json.load(f)
-    return data['test_names']
+    return data['test_names_selected']
 
 # Function to extract blood data from an image
 def extract_blood_data(image_path):
@@ -122,6 +122,6 @@ def process_images(path):
     return results  # Return the collected results
 
 if __name__ == "__main__":
-    # image_directory = "data/tamara_images"
-    image_path = "data/tamara_cibrozzi/photo_5926902182848873542_y.jpg"
+    # image_path = "data/tamara_cibrozzi/photo_5926902182848873543_y.jpg"
+    image_path = "data/tamara_cibrozzi"
     process_images(image_path)
