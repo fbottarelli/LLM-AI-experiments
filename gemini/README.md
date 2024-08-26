@@ -1,0 +1,3 @@
+- https://cloud.google.com/vertex-ai/generative-ai/docs/start/quickstarts/quickstart-multimodal
+- https://cloud.google.com/sdk/docs/initializing
+- https://console.cloud.google.com/
