@@ -1,0 +1,14 @@
+[project]
+name = "youtube"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "yt-dlp[default]>=2024.8.6",
+    "pydub>=0.25.1",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

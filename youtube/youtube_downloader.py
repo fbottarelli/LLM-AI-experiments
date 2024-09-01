@@ -4,8 +4,6 @@ import os
 import re
 from pydub import AudioSegment
 
-from
-
 # List of URLs to process
 URLS = ["https://www.youtube.com/watch?v=ZJlfF1ESXVw&t=1750s"]
 folder = "youtube/media"
