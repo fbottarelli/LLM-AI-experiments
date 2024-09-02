@@ -4,9 +4,6 @@
 [submodule "other_repo/SuperPrompt"]
 	path = other_repo/SuperPrompt
 	url = git@github.com:NeoVertex1/SuperPrompt.git
-[submodule "other_repo/WizSearch"]
-	path = other_repo/WizSearch
-	url = git@github.com:SSK-14/WizSearch.git
 [submodule "other_repo/chat-with-phi-3-vision"]
 	path = other_repo/chat-with-phi-3-vision
 	url = git@github.com:bhimrazy/chat-with-phi-3-vision.git

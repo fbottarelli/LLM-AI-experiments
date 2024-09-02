@@ -52,3 +52,9 @@ media/
 *.webm
 *.mp3
 *.wav
+
+# streamlit secrets
+secrets.toml
+
+## qdrant
+qdrant_storage/
