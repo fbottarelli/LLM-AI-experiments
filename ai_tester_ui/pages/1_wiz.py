@@ -76,7 +76,7 @@ async def main():
         st.rerun()  # Rerun the app to process the new query
 
 if __name__ == "__main__":
-    st.set_page_config(page_title="Wiz AI", page_icon="✨")  # Set page configuration
+    st.set_page_config(page_title="Mir Assistant", page_icon="✨")  # Set page configuration
     st.title("🔍 :orange[AI] Playground")  # Set the title of the app
     side_info()  # Display side information
     initialise_session_state()  # Initialize session state

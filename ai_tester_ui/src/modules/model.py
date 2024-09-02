@@ -7,7 +7,6 @@ if "IS_AZURE" in st.secrets:
 else:
     is_azure = False
 
-
 def initialise_model():
     if "llm" not in st.session_state:
         st.session_state.llm = None
@@ -18,22 +17,6 @@ def initialise_model():
         model_base_url = st.session_state.model_base_url
     else:
         st.warning('Please provide Model Base URL in sidebar.', icon="⚠️")
-        st.stop()
-    # OpenAI API Key    
-    if "OPENAI_MODEL_API_KEY" in st.secrets:
-        openai_model_api_key = st.secrets['OPENAI_MODEL_API_KEY']
-    elif st.session_state.openai_model_api_key:
-        openai_model_api_key = st.session_state.openai_model_api_key
-    else:
-        st.warning('Please provide Model API key in sidebar.', icon="⚠️")
-        st.stop()
-    # Groq API Key
-    if "GROQ_MODEL_API_KEY" in st.secrets:
-        groq_model_api_key = st.secrets['GROQ_MODEL_API_KEY']
-    elif st.session_state.groq_model_api_key:
-        groq_model_api_key = st.session_state.groq_model_api_key
-    else:
-        st.warning('Please provide Model API key in sidebar.', icon="⚠️")
         st.stop()
 
     if st.session_state.model_name is None or st.session_state.model_name == "":
@@ -83,7 +66,6 @@ def initialise_model():
             model=st.session_state.model_name,
             temperature=st.session_state.temperature or 0.1,
             max_tokens=st.session_state.max_tokens or 2500,
-            api_base=model_base_url,
             api_key=model_api_key
         )
     else:  # OpenAI
@@ -91,7 +73,6 @@ def initialise_model():
             model=st.session_state.model_name,
             temperature=st.session_state.temperature or 0.1,
             max_tokens=st.session_state.max_tokens or 2500,
-            base_url=model_base_url,
             api_key=model_api_key
         )
 

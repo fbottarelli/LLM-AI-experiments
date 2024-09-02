@@ -1,4 +1,5 @@
 import streamlit as st
+import json
 from src.modules.tools.vectorstore import all_collections, delete_collection
 
 @st.dialog("App Settings")
@@ -26,39 +27,45 @@ def system_settings():
 # Function to display sidebar information and settings
 def side_info():
     with st.sidebar:
-        # Display the application title logo
-        st.logo("src/assets/title.png", icon_image="src/assets/title.png", link="https://github.com/SSK-14")
+        st.title("Hocus Gattus", anchor="orange")  # Set title color to orange
         # Display the main logo
         st.image("src/assets/logo.png", use_column_width=True)
         # Display the header image
-        st.image("src/assets/header.png", use_column_width=True)
+        # st.image("src/assets/header.png", use_column_width=True)
 
         # Input for Model Base URL if not already set in secrets
         if "MODEL_BASE_URL" not in st.secrets:
-            st.text_input("Model Base URL", key="model_base_url", value="https://api.groq.com/openai/v1", placeholder="Eg : https://api.openai.com/v1")
+            st.text_input("Model Base URL", key="model_base_url", value="https://api.openai.com/v1", placeholder="Eg : https://api.grok.com/openai/v1")
 
         # Input for Model API Key if not already set in secrets
         if "MODEL_API_KEY" not in st.secrets:
             st.text_input(
-                "Model API Key",
+                "Model API Key (OpenAI)",
                 type="password",
                 placeholder="Enter your API key here",
                 help="Get your API key from [openai](https://platform.openai.com/account/api-keys) or [groq](https://console.groq.com/keys)",
                 key="model_api_key"
             )
 
-        # Input for Model ID if not already set in secrets
-        if "MODEL_NAMES" not in st.secrets:
-            st.text_input("Model ID", key="model_name", value="llama-3.1-8b-instant", placeholder="Eg : gpt-4o, llama3.1")
-
-        # Dropdown to select Model if MODEL_NAMES is available in secrets
-        if "MODEL_NAMES" in st.secrets:
-            st.selectbox(
-                "Select Model",
-                options=st.secrets["MODEL_NAMES"],
-                index=0,
-                key="model_name"
+        # load the model provider from the models.json file
+        with open("models.json", "r") as f:
+            models_json = json.load(f)
+        # Dropdown to select Model Provider
+        provider_list = list(models_json.keys())
+        st.selectbox(
+            "Select Model Provider",
+            options=provider_list,
+            index=0,
+            key="model_provider",
             )
+
+        model_list = models_json[st.session_state.model_provider]["model_names"]
+        st.selectbox(
+            "Select Model",
+            options=model_list,
+            index=0,
+            key="model_name"
+        )
 
         # Input for Tavily API Key if not already set in secrets
         if "TAVILY_API_KEY" not in st.secrets:

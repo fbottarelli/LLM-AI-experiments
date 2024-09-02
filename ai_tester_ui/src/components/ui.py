@@ -143,8 +143,8 @@ def upload_image():
         st.rerun()
 
 def add_image():
-    if "VISION_MODELS" in st.secrets:
-        if st.session_state.model_name in st.secrets['VISION_MODELS']:
+    if f"{st.session_state.model_provider}_VISION_MODELS" in st.secrets:
+        if st.session_state.model_name in st.secrets[f"{st.session_state.model_provider}_VISION_MODELS"]:
             if len(st.session_state.image_data):
                 if st.button("🔄 Change image", use_container_width=True):
                     st.session_state.image_data = []

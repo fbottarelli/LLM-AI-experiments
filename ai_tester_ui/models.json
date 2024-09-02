@@ -1,0 +1,30 @@
+{
+    "OpenAI": {
+      "model_names": ["gpt-4o", "gpt-4o-mini"],
+      "vision_models": ["gpt-4o", "gpt-4o-mini"]
+    },
+    "Groq": {
+      "model_names": [
+        "llama-3.1-8b-instant",
+        "gemma-7b-it",
+        "distil-whisper-large-v3-en",
+        "llama3-8b-8192",
+        "whisper-large-v3",
+        "llama3-groq-8b-8192-tool-use-preview",
+        "llama-3.1-70b-versatile",
+        "mixtral-8x7b-32768",
+        "llama3-70b-8192",
+        "gemma2-9b-it",
+        "llama-guard-3-8b"
+      ],
+      "vision_models": []
+    },
+    "DeepSeek": {
+      "model_names": ["Deep"],
+      "vision_models": []
+    },
+    "Anthropic": {
+      "model_names": ["claude-3-opus-20240229", "claude-3-haiku-20240307", "claude-3-5-sonnet-20240620"],
+      "vision_models": ["claude-3-5-sonnet-20240620"]
+    }
+  }
