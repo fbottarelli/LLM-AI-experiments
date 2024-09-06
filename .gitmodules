@@ -13,3 +13,6 @@
 [submodule "other_repo/llm-examples"]
 	path = other_repo/llm-examples
 	url = git@github.com:streamlit/llm-examples.git
+[submodule "other_repo/anthropic-quickstarts"]
+	path = other_repo/anthropic-quickstarts
+	url = git@github.com:anthropics/anthropic-quickstarts.git

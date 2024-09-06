@@ -36,6 +36,7 @@ async def main():
                 prompt = await generate_summary_prompt()
                 followup_query_asyncio = None
             else:
+                # here the main call to generate answer prompt
                 prompt, followup_query_asyncio = await generate_answer_prompt()
         except Exception as e:
             end_trace(str(e), "ERROR")  # End trace on error
