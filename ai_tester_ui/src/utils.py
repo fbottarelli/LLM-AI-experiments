@@ -41,7 +41,7 @@ def initialise_session_state():
         st.session_state.temperature = 0.1
 
     if "max_tokens" not in st.session_state:
-        st.session_state.max_tokens = 2500
+        st.session_state.max_tokens = 3200
 
     if "search_results" not in st.session_state:
         st.session_state.search_results = None

@@ -68,8 +68,8 @@ def video_integration(video_file_path, prompt):
 
 
 if __name__ == "__main__":
-    basic_text = False
-    python_script = True
+    basic_text = True
+    python_script = False
     doc_pdf = False
     image_uri = False
     audio_integration = False
