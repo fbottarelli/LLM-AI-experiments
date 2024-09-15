@@ -2,3 +2,5 @@ litellm
 python-dotenv
 pyyaml
 streamlit
+altair
+pandas

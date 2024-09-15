@@ -58,3 +58,6 @@ secrets.toml
 
 ## qdrant
 qdrant_storage/
+
+# node modules
+node_modules/

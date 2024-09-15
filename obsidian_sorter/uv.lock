@@ -763,7 +763,9 @@ name = "obsidian-sorter"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
+    { name = "altair" },
     { name = "litellm" },
+    { name = "pandas" },
     { name = "python-dotenv" },
     { name = "pyyaml" },
     { name = "streamlit" },
@@ -772,7 +774,9 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
+    { name = "altair", specifier = ">=5.4.1" },
     { name = "litellm", specifier = ">=1.46.0" },
+    { name = "pandas", specifier = ">=2.2.2" },
     { name = "python-dotenv", specifier = ">=1.0.1" },
     { name = "pyyaml", specifier = ">=6.0.2" },
     { name = "streamlit", specifier = ">=1.38.0" },
