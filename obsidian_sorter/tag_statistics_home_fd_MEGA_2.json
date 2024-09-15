@@ -1,0 +1,32 @@
+{
+  "total_files": 2046,
+  "total_unique_tags": 55,
+  "top_tags": {
+    "Technology": 176,
+    "Technology/AI": 105,
+    "miscellaneous": 77,
+    "Technology/AI/llm": 75,
+    "Technology/Software_Development": 55,
+    "Technology/AI/generative_ai": 41,
+    "Technology/Software_Development/api": 34,
+    "Technology/Cloud": 31,
+    "Knowledge_and_Research": 27,
+    "Technology/Data_Science": 22
+  },
+  "avg_tags_per_file": 0.4912023460410557,
+  "files_without_tags": 1800,
+  "tag_distribution": {
+    "0": 1800,
+    "1": 52,
+    "6": 35,
+    "5": 49,
+    "7": 15,
+    "3": 39,
+    "4": 46,
+    "8": 3,
+    "11": 3,
+    "10": 2,
+    "2": 1,
+    "13": 1
+  }
+}
