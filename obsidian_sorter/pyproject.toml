@@ -7,6 +7,9 @@ requires-python = ">=3.12"
 dependencies = [
     "python-dotenv>=1.0.1",
     "vertexai>=1.63.0",
+    "litellm>=1.46.0",
+    "pyyaml>=6.0.2",
+    "streamlit>=1.38.0",
 ]
 
 [build-system]
