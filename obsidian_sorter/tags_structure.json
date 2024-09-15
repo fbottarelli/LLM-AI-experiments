@@ -1,0 +1,96 @@
+{
+  "Technology": {
+    "AI": [
+      "aigen",
+      "llm",
+      "machine_learning",
+      "deep_learning",
+      "nlp",
+      "optimization",
+      "generative_ai",
+      "chatgpt",
+      "openai",
+      "code_assistant",
+      "ai_agent"
+    ],
+    "Cloud": [
+      "iac",
+      "aws",
+      "cloud",
+      "modern_applications"
+    ],
+    "OS": [
+      "linux",
+      "windows",
+      "macos",
+      "android",
+      "ios"
+    ],
+    "Software_Development": [
+      "api",
+      "coding",
+      "webdev",
+      "desktop_dev",
+      "mobile_dev"
+    ],
+    "Data_Science": {
+      "Statistics": [
+        "descriptive_statistics",
+        "inferential_statistics",
+        "probability",
+        "statistics",
+        "generalized_linear_models",
+        "time_series"
+      ],
+      "Data_Analysis": [
+        "tableau"
+      ],
+      "Database": [
+        "database",
+        "datastream",
+        "information_retrieval",
+        "nosql",
+        "sql",
+        "vector_db"
+      ]
+    },
+    "Cybersecurity": [
+      "cybersecurity"
+    ],
+    "Electronics": [
+      "electronics",
+      "microcontroller",
+      "raspberry_pi",
+      "arduino"
+    ],
+    "DevOps": {
+      "Ansible": []
+    }
+  },
+  "Knowledge_and_Research": {
+    "Languages": [
+      "english_language"
+    ],
+    "History": [
+      "storia",
+      "olanda"
+    ],
+    "General_Knowledge": [
+      "knowledge"
+    ]
+  },
+  "Work": [
+    "work",
+    "Miriade",
+    "Miriade_AI"
+  ],
+  "Personal": [
+    "personal",
+    "linkedin",
+    "article",
+    "book",
+    "streamer",
+    "holiday",
+    "health"
+  ]
+}

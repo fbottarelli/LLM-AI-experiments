@@ -1,55 +1,21 @@
 import os
-import litellm
+from openai import OpenAI
 from dotenv import load_dotenv
 import yaml
 import streamlit as st
+import json
 
 # Load environment variables
 load_dotenv()
 
 def classify_and_tag(note_path):
     """Classifies the content of a note and tags it with one or more genres."""
-    # List of topics with hierarchical structure
-    genres = {
-        "Technology": {
-            "AI": ["aigen", "llm", "machine_learning", "deep_learning", "nlp", "optimization", "generative_ai", "chatgpt", "openai", "code_assistant", "ai_agent"],
-            "Cloud": ["iac", "aws", "cloud", "modern_applications"],
-            "Software_Development": ["api", "coding", "webdev", "desktop_dev", "mobile_dev"],
-            "Data_Science": {
-                "Statistics": ["descriptive_statistics", "inferential_statistics", "probability", "statistics", "generalized_linear_models", "time_series"],
-                "Data_Analysis": ["tableau"],
-                "Database": ["database", "datastream", "information_retrieval", "nosql", "sql"],
-            },
-            "Cybersecurity": ["cybersecurity"],
-            "Electronics": ["electronics", "microcontroller", "raspberry_pi", "arduino"],
-        },
-        "Knowledge_and_Research": {
-            "Languages": ["english_language"],
-            "History": ["storia", "olanda"],
-            "General_Knowledge": ["knowledge"],
-        },
-        "Work": ["work", "Miriade", "Miriade_AI"],
-        "Personal": ["personal", "linkedin", "article", "book", "streamer", "holiday", "health"],
-    }
+    # Load genres from JSON file
+    with open('tags_structure.json', 'r') as f:
+        genres = json.load(f)
 
     # Create a flattened representation of genres for the prompt
-    flattened_genres = []
-    for main_category, subcategories in genres.items():
-        flattened_genres.append(main_category)
-        if isinstance(subcategories, dict):
-            for subcategory, items in subcategories.items():
-                flattened_genres.append(f"{main_category}/{subcategory}")
-                if isinstance(items, list):
-                    for item in items:
-                        flattened_genres.append(f"{main_category}/{subcategory}/{item}")
-                elif isinstance(items, dict):
-                    for subsubcategory, subitems in items.items():
-                        flattened_genres.append(f"{main_category}/{subcategory}/{subsubcategory}")
-                        for subitem in subitems:
-                            flattened_genres.append(f"{main_category}/{subcategory}/{subsubcategory}/{subitem}")
-        elif isinstance(subcategories, list):
-            for item in subcategories:
-                flattened_genres.append(f"{main_category}/{item}")
+    flattened_genres = get_all_tags_flat(genres)
 
     # Create a lowercase version of flattened_genres for case-insensitive comparison
     lowercase_genres = [genre.lower() for genre in flattened_genres]
@@ -68,16 +34,23 @@ def classify_and_tag(note_path):
         {"role": "user", "content": f"Classify the following text:\n\n{content[:4000]}"}
     ]
 
-    # Choose the model you want to use
-    model_name = "openai/gpt-4o-mini"  # Replace with "anthropic/claude-v1" or "google/gemini-1.5-pro-001" as needed
+    # Initialize OpenAI client with OpenRouter configuration
+    client = OpenAI(
+        base_url="https://openrouter.ai/api/v1",
+        api_key=os.getenv("OPENROUTER_API_KEY"),
+    )
 
     try:
-        response = litellm.completion(
-            model=model_name,
+        completion = client.chat.completions.create(
+            extra_headers={
+                "HTTP-Referer": "https://your-app-url.com",  # Replace with your app's URL
+                "X-Title": "ObsidianSorter",  # Replace with your app's name
+            },
+            model="openai/gpt-4o-mini",  # You can change this to other models supported by OpenRouter
             messages=messages,
             max_tokens=100  # Adjust as needed
         )
-        classified_genres = response.choices[0].message.content.strip().lower().split(',')
+        classified_genres = completion.choices[0].message.content.strip().lower().split(',')
         classified_genres = [genre.strip() for genre in classified_genres]
     except Exception as e:
         print(f"Error during classification: {str(e)}")
@@ -111,41 +84,6 @@ def classify_and_tag(note_path):
     # Add the genre tags to the file
     add_tags(note_path, all_tags)
     print(f"File '{note_path}' classified as '{', '.join(valid_classified_genres)}' and tagged accordingly.")
-
-def add_tags(note_path, tags):
-    """Replaces all tags in the note's YAML front matter with the specified tags."""
-    with open(note_path, 'r', encoding='utf-8') as f:
-        content = f.read()
-
-    # Check if there's a YAML front matter
-    if content.startswith('---'):
-        end_of_yaml = content.find('---', 3)
-        if end_of_yaml != -1:
-            yaml_content = content[3:end_of_yaml]
-            rest_of_content = content[end_of_yaml+3:]
-
-            try:
-                # Parse existing YAML content
-                yaml_data = yaml.safe_load(yaml_content)
-                if not isinstance(yaml_data, dict):
-                    yaml_data = {}
-            except yaml.YAMLError:
-                yaml_data = {}
-
-            # Replace existing tags with new tags
-            yaml_data['tags'] = sorted(tags)
-            updated_yaml_content = yaml.dump(yaml_data, sort_keys=False)
-
-            updated_content = f'---\n{updated_yaml_content}---\n{rest_of_content}'
-        else:
-            # If YAML is not properly closed, treat as no YAML
-            updated_content = create_yaml_front_matter(tags, content)
-    else:
-        # If no YAML, add it
-        updated_content = create_yaml_front_matter(tags, content)
-
-    with open(note_path, 'w', encoding='utf-8') as f:
-        f.write(updated_content)
 
 def add_tags(note_path, tags):
     """Replaces all tags in the note's YAML front matter with the specified tags."""
@@ -287,3 +225,12 @@ def get_all_tags(directory_path):
                 file_path = os.path.join(root, file)
                 all_tags.update(list_tags(file_path))
     return sorted(list(all_tags))
+
+def get_all_tags_flat(structure, prefix=''):
+    tags = []
+    for key, value in structure.items():
+        full_tag = f"{prefix}/{key}" if prefix else key
+        tags.append(full_tag)
+        if isinstance(value, dict):
+            tags.extend(get_all_tags_flat(value, full_tag))
+    return tags

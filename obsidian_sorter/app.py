@@ -123,7 +123,7 @@ def main():
     st.title("Obsidian Note Tagger")
 
     # Input for directory path
-    directory_path = st.text_input("Enter the directory path containing markdown files:")
+    directory_path = st.text_input("Enter the directory path containing markdown files:", "/home/fd/MEGA_2")
 
     if directory_path and os.path.isdir(directory_path):
         # Create a placeholder for the log window
@@ -137,7 +137,6 @@ def main():
         stats = generate_tag_statistics(directory_path)
 
         # Display tag statistics
-        st.subheader("Tag Statistics Dashboard")
         display_tag_statistics(stats)
 
         # Add a button to update statistics manually
@@ -150,15 +149,16 @@ def main():
         # Process single file or folder
         st.subheader("Process Single File or Folder")
         selected_path = st.text_input("Enter a file path or folder path to process:")
-        col1, col2, col3 = st.columns(3)
-        
-        if col1.button("Process File/Folder"):
+        if st.button("Process File/Folder"):
             process_path(selected_path, update_log)
 
-        if col2.button("Process All Files"):
+        st.subheader("Batch Processing")
+        col1, col2 = st.columns(2)
+        
+        if col1.button("Process All Files"):
             process_all_files(directory_path, update_log)
 
-        if col3.button("Process Files Without Tags"):
+        if col2.button("Process Files Without Tags"):
             process_files_without_tags(directory_path, update_log)
 
         # Tag management
@@ -180,6 +180,17 @@ def main():
         st.subheader("Backup System")
         if st.button("Create Backup"):
             create_backup_and_log(directory_path, update_log)
+
+        # Folder tagging
+        st.subheader("Folder Tagging")
+        folder_to_tag = st.text_input("Enter folder path to tag:")
+        tags_to_add = st.text_input("Enter tags to add (comma-separated):")
+        if st.button("Tag Folder"):
+            tag_folder(folder_to_tag, tags_to_add.split(','), update_log)
+
+        # Tag structure management
+        st.subheader("Tag Management")
+        manage_tags(update_log)
 
     else:
         st.warning("Please enter a valid directory path")
@@ -238,6 +249,107 @@ def create_backup_and_log(directory_path, update_log):
     update_log("Creating backup...")
     backup_path = create_backup(directory_path)
     update_log(f"Backup created successfully: {backup_path}")
+
+def tag_folder(folder_path, tags, update_log):
+    if not os.path.isdir(folder_path):
+        update_log(f"Invalid folder path: {folder_path}")
+        return
+
+    files_tagged = 0
+    for root, _, files in os.walk(folder_path):
+        for file in files:
+            if file.endswith('.md'):
+                file_path = os.path.join(root, file)
+                add_tags_to_file(file_path, tags)
+                files_tagged += 1
+                update_log(f"Tagged file: {file_path}")
+
+    update_log(f"Tagged {files_tagged} files in {folder_path} and its subfolders")
+
+def manage_tags(update_log):
+    tags_file = 'tags_structure.json'
+    tags_structure = load_tags_structure(tags_file)
+
+    st.write("Current Tag Structure:")
+    st.json(tags_structure)
+
+    operation = st.selectbox("Select operation", ["Add", "Remove", "Update"])
+    
+    if operation == "Add":
+        new_tag = st.text_input("Enter new tag (use '/' for hierarchy):")
+        if st.button("Add Tag"):
+            add_tag_to_structure(tags_structure, new_tag)
+            save_tags_structure(tags_file, tags_structure)
+            update_log(f"Added tag: {new_tag}")
+
+    elif operation == "Remove":
+        tag_to_remove = st.selectbox("Select tag to remove", get_all_tags_flat(tags_structure))
+        if st.button("Remove Tag"):
+            remove_tag_from_structure(tags_structure, tag_to_remove)
+            save_tags_structure(tags_file, tags_structure)
+            update_log(f"Removed tag: {tag_to_remove}")
+
+    elif operation == "Update":
+        old_tag = st.selectbox("Select tag to update", get_all_tags_flat(tags_structure))
+        new_tag = st.text_input("Enter new tag name:")
+        if st.button("Update Tag"):
+            update_tag_in_structure(tags_structure, old_tag, new_tag)
+            save_tags_structure(tags_file, tags_structure)
+            update_log(f"Updated tag: {old_tag} to {new_tag}")
+
+def load_tags_structure(file_path):
+    if os.path.exists(file_path):
+        with open(file_path, 'r') as f:
+            return json.load(f)
+    return {}
+
+def save_tags_structure(file_path, structure):
+    with open(file_path, 'w') as f:
+        json.dump(structure, f, indent=2)
+
+def get_all_tags_flat(structure, prefix=''):
+    tags = []
+    for key, value in structure.items():
+        full_tag = f"{prefix}/{key}" if prefix else key
+        tags.append(full_tag)
+        if isinstance(value, dict):
+            tags.extend(get_all_tags_flat(value, full_tag))
+    return tags
+
+def add_tag_to_structure(structure, tag):
+    parts = tag.split('/')
+    current = structure
+    for part in parts[:-1]:
+        if part not in current:
+            current[part] = {}
+        current = current[part]
+    if isinstance(current, dict):
+        if parts[-1] not in current:
+            current[parts[-1]] = []
+    elif isinstance(current, list):
+        if parts[-1] not in current:
+            current.append(parts[-1])
+    else:
+        # If we're here, it means we're trying to add a subtag to a leaf node
+        # Convert the leaf node to a dict and add the new tag
+        parent = structure
+        for part in parts[:-2]:
+            parent = parent[part]
+        parent[parts[-2]] = {parts[-1]: []}
+
+def remove_tag_from_structure(structure, tag):
+    parts = tag.split('/')
+    current = structure
+    for part in parts[:-1]:
+        if part not in current:
+            return
+        current = current[part]
+    if parts[-1] in current:
+        del current[parts[-1]]
+
+def update_tag_in_structure(structure, old_tag, new_tag):
+    remove_tag_from_structure(structure, old_tag)
+    add_tag_to_structure(structure, new_tag)
 
 if __name__ == "__main__":
     main()

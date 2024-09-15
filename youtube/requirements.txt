@@ -1,2 +1,2 @@
-yt-dlp[default]
-pydub
+streamlit
+yt-dlp
