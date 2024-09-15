@@ -1,24 +1,65 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import axios from 'axios'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Search, Plus, Clipboard, Home, ChevronDown, Copy, MoreHorizontal, Star } from 'lucide-react'
 
+interface Prompt {
+  id: number;
+  content: string;
+  category: string;
+}
+
 export default function PromptManager() {
   const [activeCategory, setActiveCategory] = useState('All Prompts')
   const [searchQuery, setSearchQuery] = useState('')
+  const [prompts, setPrompts] = useState<Prompt[]>([])
 
   const categories = [
     'All Prompts', 'Most Used', 'Recent', 'Starred', 'AI', 'Marketing', 'Coding'
   ]
 
-  const prompts = [
-    { id: 1, content: 'Write a blog post about...', category: 'Marketing' },
-    { id: 2, content: 'Generate Python code for...', category: 'Coding' },
-    { id: 3, content: 'Create an AI model that...', category: 'AI' },
-    // Add more prompts here...
-  ]
+  useEffect(() => {
+    fetchPrompts()
+  }, [])
+
+  const fetchPrompts = async () => {
+    try {
+      const response = await axios.get<Prompt[]>('http://localhost:5000/api/prompts')
+      setPrompts(response.data)
+    } catch (error) {
+      console.error('Error fetching prompts:', error)
+    }
+  }
+
+  const createPrompt = async (content: string, category: string) => {
+    try {
+      const response = await axios.post<Prompt>('http://localhost:5000/api/prompts', { content, category })
+      setPrompts([...prompts, response.data])
+    } catch (error) {
+      console.error('Error creating prompt:', error)
+    }
+  }
+
+  const updatePrompt = async (id: number, content: string, category: string) => {
+    try {
+      await axios.put(`http://localhost:5000/api/prompts/${id}`, { content, category })
+      setPrompts(prompts.map(prompt => prompt.id === id ? { ...prompt, content, category } : prompt))
+    } catch (error) {
+      console.error('Error updating prompt:', error)
+    }
+  }
+
+  const deletePrompt = async (id: number) => {
+    try {
+      await axios.delete(`http://localhost:5000/api/prompts/${id}`)
+      setPrompts(prompts.filter(prompt => prompt.id !== id))
+    } catch (error) {
+      console.error('Error deleting prompt:', error)
+    }
+  }
 
   const filteredPrompts = prompts.filter(prompt => 
     (activeCategory === 'All Prompts' || prompt.category === activeCategory) &&

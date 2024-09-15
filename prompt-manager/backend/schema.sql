@@ -1,0 +1,7 @@
+DROP TABLE IF EXISTS prompts;
+
+CREATE TABLE prompts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    content TEXT NOT NULL,
+    category TEXT NOT NULL
+);
