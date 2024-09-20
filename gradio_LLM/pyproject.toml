@@ -1,0 +1,16 @@
+[project]
+name = "gradio-llm"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "gradio>=4.44.0",
+    "openai>=1.47.0",
+    "faiss-cpu>=1.8.0.post1",
+    "langgraph>=0.2.22",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

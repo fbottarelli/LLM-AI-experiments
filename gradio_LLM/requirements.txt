@@ -1,0 +1,4 @@
+gradio
+openai
+faiss-cpu
+langgraph
