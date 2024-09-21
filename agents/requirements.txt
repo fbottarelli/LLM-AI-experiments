@@ -11,3 +11,6 @@ langchain-fireworks>=0.1.7
 langchain-community>=0.2.17
 tavily-python>=0.4.0
 # End of Selection
+
+# RAG
+qdrant-client
