@@ -9,6 +9,13 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # langraph
+
+# memory
+from langgraph.checkpoint.memory import MemorySaver
+
+
+# tools
+import tools
 from langgraph.prebuilt import ToolNode, tools_condition
 from langgraph.graph import MessagesState
 class MessagesState(MessagesState):
@@ -38,39 +45,39 @@ llm = ChatOpenAI(
     temperature=0.0
 )
 
-def multiply(a: int, b: int) -> int:
-    """Multiply a and b.
 
-    Args:
-        a: first int
-        b: second int
-    """
-    return a * b
 
-tools = [multiply]
+tools = [tools.multiply, tools.add, tools.divide]
 
 llm_with_tools = llm.bind_tools(tools)
 
-# Node
-def tool_calling_llm(state: MessagesState):
-    return {"messages": [llm_with_tools.invoke(state["messages"])]}
+# System message
+system_message = """
+You are a helpful assistant that can multiply, add, and divide numbers.
+"""
 
+# Node
+def assistant(state: MessagesState):
+    return {"messages": [llm_with_tools.invoke([system_message] + state["messages"])]}
+
+memory = MemorySaver()
 # Build graph
 builder = StateGraph(MessagesState)
-builder.add_node("tool_calling_llm", tool_calling_llm)
-builder.add_node("tools", ToolNode([multiply]))
-builder.add_edge(START, "tool_calling_llm")
+builder.add_node("assistant", assistant)
+builder.add_node("tools", ToolNode(tools))
+builder.add_edge(START, "assistant")
 builder.add_conditional_edges(
-    "tool_calling_llm",
+    "assistant",
     # If the latest message (result) from assistant is a tool call -> tools_condition routes to tools
     # If the latest message (result) from assistant is a not a tool call -> tools_condition routes to END
     tools_condition,
 )
-builder.add_edge("tools", END)
-graph = builder.compile()
+builder.add_edge("tools", "assistant")
+graph = builder.compile(checkpointer=memory)
+
 
 # Convert the graph image to a PIL Image before displaying
-graph_image = graph.get_graph().draw_mermaid_png()  # Convert to 
+graph_image = graph.get_graph(xray=True).draw_mermaid_png()  # Convert to 
 
 
 def main():
@@ -99,6 +106,7 @@ def main():
             response = graph.invoke(inputs)
             print(response)
             st.write(response["messages"][-1].content)
+            st.write(response["messages"][-1].tool_calls)
         
         st.session_state.messages = response["messages"] 
 
