@@ -15,9 +15,15 @@ st.title("Chat with AI Agent")  # Set the title of the Streamlit app
 
 
 # List of available models for the AI agent
+# available_models = [
+#     "openai/gpt-4o-mini",  # Mini version of GPT-4
+#     "openai/gpt-4o",  # Full version of GPT-4
+#     # Add more models as needed
+# ]
+
 available_models = [
-    "openai/gpt-4o-mini",  # Mini version of GPT-4
-    "openai/gpt-4",  # Full version of GPT-4
+    "gpt-4o-mini",  # Mini version of GPT-4
+    "gpt-4o",  # Full version of GPT-4
     # Add more models as needed
 ]
 

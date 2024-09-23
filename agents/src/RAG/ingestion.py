@@ -3,7 +3,7 @@
 ########################################################
 ########################################################
 ### TXT
-def extract_txt(txt_path: str):
+def extract_txt(txt_path: str, chunk: bool = False):
     """
     Extracts text from a local plain text file.
 
@@ -17,13 +17,27 @@ def extract_txt(txt_path: str):
         text = file.read()
     return text
 
+def extract_md(md_path: str, chunk: bool = False):
+    """
+    Extracts text from a local markdown file.
+
+    Parameters:
+    md_path (str): The path to the markdown file from which to extract text.
+
+    Returns:
+    str: The extracted text from the file.
+    """
+    with open(md_path, "r") as file:
+        text = file.read()
+    return text
+
 ########################################################
 ########################################################
 ### PDF
 from pypdf import PdfReader
 
 
-def extract_pdf(pdf_path: str):
+def extract_pdf(pdf_path: str, chunk: bool = False):
     """
     Extracts text from a PDF file located on the local filesystem.
 
@@ -56,15 +70,35 @@ def pdf_to_image(pdf_path: str):
 
 ########################################################
 ########################################################
+### DOCX
+
+########################################################
+########################################################
+### PNG/JPEG
+import base64
+# Function to encode the image
+def encode_image(image_path):
+  with open(image_path, "rb") as image_file:
+    return base64.b64encode(image_file.read()).decode('utf-8')
+
+
+
+########################################################
+########################################################
 ### GATEWAY
-def gateway_ingestion(file: str):
+
+def gateway_ingestion_streamlit(file: UploadedFile, chunk: bool = False):
     """
     Choose the right function to extract text from the file by its extension.
     """
     if file.endswith(".txt"):
-        return extract_text_local(file)
+        return extract_txt(file)
     elif file.endswith(".pdf"):
-        return extract_pdf_local(file)
+        return extract_pdf(file)
+    elif file.endswith(".md"):
+        return extract_md(file)
+    elif file.endswith(".jpeg") or file.endswith(".png"):
+        return encode_image(file)
     else:
         raise ValueError("Unsupported file type")
 
