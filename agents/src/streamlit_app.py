@@ -1,7 +1,7 @@
 import streamlit as st
 
 def home():
-    st.write("# Benvenuti all'Esperimento Agente! 🧪")
+    st.write("# Benvenuti Agenti! 🧪")
     st.markdown(
         """
         Questa app multi-pagina ti permette di sperimentare con diversi agenti e modelli AI.

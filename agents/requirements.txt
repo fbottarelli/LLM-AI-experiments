@@ -12,7 +12,13 @@ qdrant-client
 
 # ell
 ell-ai
+anthropic
 
 # langfuse
 langfuse
 langsmith
+
+
+# ingestion
+pypdf
+pdf2image

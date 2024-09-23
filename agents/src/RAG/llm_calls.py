@@ -20,7 +20,7 @@ openai_client = OpenAI(
 ell.init()
 
 @traceable
-@ell.simple(model="gpt-4o-mini", temperature=0.2, client=openai_client)
+@ell.simple(model="gpt-4o-mini", temperature=0.2, client=openrouter_client)
 def llm_summarize(text: str):
     return [
         ell.system("You are a helpful assistant."),
@@ -29,7 +29,7 @@ def llm_summarize(text: str):
     ]
 
 @traceable
-@ell.simple(model="gpt-4o-mini", temperature=0.2, client=openai_client)
+@ell.simple(model="gpt-4o-mini", temperature=0.2, client=openrouter_client)
 def llm_generic(query: str):
     return [
         ell.system("You are a helpful assistant."),

@@ -17,7 +17,8 @@ st.header("Create Collection")
 collection_name = st.text_input("Collection Name", "my_collection")
 vector_size = st.number_input("Vector Size", min_value=1, value=100)
 if st.button("Create Collection"):
-    create_collection(collection_name, vector_size)
+    create_collection(client, collection_name, vector_size)
+    st.write("Collection created successfully.")
 
 # Upsert Points Section
 st.header("Upsert Points")
