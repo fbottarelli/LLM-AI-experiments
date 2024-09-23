@@ -5,19 +5,14 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
+    "ell-ai>=0.0.6",
     "gradio>=4.44.0",
-    "ipykernel>=6.29.5",
-    "langchain-anthropic>=0.1.23",
-    "langchain-community>=0.2.17",
-    "langchain-fireworks>=0.1.7",
-    "langchain-openai>=0.1.22",
-    "langgraph>=0.2.6",
+    "langfuse>=2.50.2",
+    "langgraph>=0.2.23",
+    "langsmith>=0.1.125",
     "openai>=1.47.0",
     "python-dotenv>=1.0.1",
     "qdrant-client>=1.11.2",
     "streamlit>=1.38.0",
-    "tavily-python>=0.4.0",
+    "tavily-python>=0.5.0",
 ]
-
-[tool.uv.workspace]
-members = ["langchain-academy-main"]

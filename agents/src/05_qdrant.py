@@ -1,47 +1,13 @@
 import streamlit as st
 from qdrant_client import QdrantClient
+from RAG.qdrant import create_collection, upsert_points, search_points
 from qdrant_client.models import VectorParams, Distance, PointStruct, Filter, FieldCondition, Range
 import numpy as np
 
 # Initialize Qdrant client
 client = QdrantClient(host="localhost", port=6333)
 
-# Function to create a collection
-def create_collection(collection_name, vector_size):
-    if not client.collection_exists(collection_name):
-        client.create_collection(
-            collection_name=collection_name,
-            vectors_config=VectorParams(size=vector_size, distance=Distance.COSINE),
-        )
-        st.success(f"Collection '{collection_name}' created successfully.")
-    else:
-        st.warning(f"Collection '{collection_name}' already exists.")
 
-# Function to upsert points
-def upsert_points(collection_name, vectors):
-    points = [
-        PointStruct(
-            id=idx,
-            vector=vector.tolist(),
-            payload={"color": "red", "rand_number": idx % 10}
-        )
-        for idx, vector in enumerate(vectors)
-    ]
-    client.upsert(
-        collection_name=collection_name,
-        points=points
-    )
-    st.success(f"Points upserted successfully into '{collection_name}'.")
-
-# Function to search points
-def search_points(collection_name, query_vector, filter_condition=None):
-    hits = client.search(
-        collection_name=collection_name,
-        query_vector=query_vector,
-        query_filter=filter_condition,
-        limit=5  # Return 5 closest points
-    )
-    return hits
 
 # Streamlit interface
 st.title("Qdrant Management Interface")
