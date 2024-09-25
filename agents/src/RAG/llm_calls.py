@@ -6,15 +6,6 @@ import ell
 # langsmith
 from langsmith import traceable
 
-# Initialize OpenAI client with base URL and API key
-openrouter_client = OpenAI(
-    base_url="https://openrouter.ai/api/v1",
-    api_key=os.getenv("OPENROUTER_API_KEY"),  # Get API key from environment variable
-)
-
-openai_client = OpenAI(
-    api_key=os.getenv("OPENAI_API_KEY"),  # Get API key from environment variable
-)
 
 available_models = ["openai/gpt-4o-mini", "openai/gpt-4o", "qwen/qwen-2.5-72b-instruct"]
 

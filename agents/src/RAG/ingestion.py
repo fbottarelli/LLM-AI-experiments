@@ -87,7 +87,7 @@ def encode_image(image_path):
 ########################################################
 ### GATEWAY
 
-def gateway_ingestion_streamlit(file: UploadedFile, chunk: bool = False):
+def gateway_ingestion(file: list[str], chunk: bool = False):
     """
     Choose the right function to extract text from the file by its extension.
     """

@@ -6,6 +6,7 @@ from RAG.llm_calls import llm_rag_openai, llm_rag_vision_openai, llm_generic_ope
 from RAG.llm_calls import docs_input, images_input
 from RAG.ingestion import gateway_ingestion, encode_image
 load_dotenv()
+from io import StringIO
 
 st.title("Chat with AI Agent")
 
@@ -27,6 +28,9 @@ def lstr_to_generator(lstr_instance):
 
 
 def handle_messages():
+    # Initialize the "case" key in session state if it doesn't exist
+    if "case" not in st.session_state:
+        st.session_state["case"] = "no_context"
 
     # Add sidebar for model selection
     with st.sidebar:
@@ -49,12 +53,15 @@ def handle_messages():
                 st.session_state["image_list"] = []
                 
                 for file in uploaded_files:
-                    st.session_state["attachments"].append(gateway_ingestion(file))
+                    # st.session_state["attachments"].append(gateway_ingestion(file))
                     
-                    if file.type in ["pdf", "txt", "md"]:
+                    if file.name.endswith((".pdf", ".txt", ".md")):
+                        st.write(f"Current file: {file.name}")
                         st.session_state["has_docs"] = True
-                        st.session_state["doc_list"].append(docs_input(page_content=file.read().decode("utf-8"), metadata={"source": file.name}))
-                    elif file.type in ["jpeg", "png"]:
+                        st.session_state["doc_list"].append(docs_input(page_content=(StringIO(file.getvalue().decode("utf-8")).read()), metadata={"source": file.name}))
+                        st.write(f"Current case: {st.session_state['case']}")
+                        st.write(f"Current doc_list: {st.session_state['doc_list']}")
+                    elif file.name.endswith((".jpeg", ".png")):
                         st.session_state["has_images"] = True
                         st.session_state["image_list"].append(images_input(page_content=encode_image(file), metadata={"source": file.name}))
                 
@@ -70,7 +77,7 @@ def handle_messages():
         else:
             st.session_state["case"] = "no_context"
 
-        st.write(f"Current case: {st.session_state['case']}")
+        # st.write(f"Current case: {st.session_state['case']}")
 
     if "messages" not in st.session_state:
         st.session_state.messages = []
@@ -87,15 +94,16 @@ def handle_messages():
             st.markdown(query)
 
         with st.chat_message("assistant"):
-            if st.session_state["case"] == "no_context":
-                stream = llm_generic_openai(query, st.session_state["model"], openrouter_client)
-            elif st.session_state["case"] == "docs_only":
-                stream = llm_rag_openai(query, st.session_state["doc_list"], st.session_state["model"], openrouter_client)
-            elif st.session_state["case"] == "images_only":
-                stream = llm_vision_openai(query, st.session_state["image_list"], st.session_state["model"], openrouter_client)
-            elif st.session_state["case"] == "docs_and_images":
-                stream = llm_rag_vision_openai(query, st.session_state["image_list"], st.session_state["doc_list"], st.session_state["model"], openrouter_client)
-            
+            if st.session_state["case"]:
+                if st.session_state["case"] == "no_context":
+                    stream = llm_generic_openai(query, st.session_state["model"], openrouter_client)
+                elif st.session_state["case"] == "docs_only":
+                    stream = llm_rag_openai(query, st.session_state["doc_list"], st.session_state["model"], openrouter_client)
+                elif st.session_state["case"] == "images_only":
+                    stream = llm_vision_openai(query, st.session_state["image_list"], st.session_state["model"], openrouter_client)
+                elif st.session_state["case"] == "docs_and_images":
+                    stream = llm_rag_vision_openai(query, st.session_state["image_list"], st.session_state["doc_list"], st.session_state["model"], openrouter_client)
+                
             response = st.write_stream(stream)
         st.session_state.messages.append({"role": "assistant", "content": response})
 
