@@ -8,7 +8,7 @@ from RAG.qdrant import list_collections
 load_dotenv()  # Load environment variables from .env file
 
 # LLM calls
-from RAG.llm_calls import llm_summarize, llm_generic, llm_generic_openai
+from RAG.llm_calls import llm_generic_openai
 from RAG.ingestion import gateway_ingestion
 
 st.title("Chat with AI Agent")  # Set the title of the Streamlit app
@@ -69,7 +69,7 @@ def handle_messages():
             
             start_time_ell = time.time()  # Start timer for ell call
             with st.spinner("ell call"):
-                stream = llm_generic(st.session_state.messages[-1]["content"])
+                stream = llm_generic_openai(st.session_state.messages[-1]["content"])
                 response = st.write(stream)  # Write the streamed response from ell
             ell_duration = time.time() - start_time_ell  # Calculate duration for ell call
             
