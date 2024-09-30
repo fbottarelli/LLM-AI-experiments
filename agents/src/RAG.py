@@ -2,9 +2,10 @@ from openai import OpenAI
 import streamlit as st
 import os
 from dotenv import load_dotenv
-from RAG.llm_calls import llm_rag_openai, llm_rag_vision_openai, llm_generic_openai, llm_vision_openai 
-from RAG.llm_calls import docs_input, images_input
-from RAG.ingestion import gateway_ingestion, encode_image
+from libs.RAG.llm_calls import llm_rag_openai, llm_rag_vision_openai, llm_generic_openai, llm_vision_openai 
+from libs.RAG.llm_calls import docs_input, images_input
+from libs.RAG.ingestion import gateway_ingestion, encode_image
+from libs.RAG.embeddings import create_embeddings_openai, create_embeddings_bedrock
 load_dotenv()
 from io import StringIO
 
@@ -25,13 +26,7 @@ def lstr_to_generator(lstr_instance):
     for char in lstr_instance:
         yield char
 
-
-
-def handle_messages():
-    # Initialize the "case" key in session state if it doesn't exist
-    if "case" not in st.session_state:
-        st.session_state["case"] = "no_context"
-
+def RAG_sidebar():
     # Add sidebar for model selection
     with st.sidebar:
         st.header("Model Selection")  # Sidebar header
@@ -77,7 +72,12 @@ def handle_messages():
         else:
             st.session_state["case"] = "no_context"
 
-        # st.write(f"Current case: {st.session_state['case']}")
+def handle_messages():
+    # Initialize the "case" key in session state if it doesn't exist
+    if "case" not in st.session_state:
+        st.session_state["case"] = "no_context"
+
+    RAG_sidebar()
 
     if "messages" not in st.session_state:
         st.session_state.messages = []

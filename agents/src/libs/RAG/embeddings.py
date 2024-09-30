@@ -1,5 +1,4 @@
 from openai import OpenAI
-import boto3
 import json
 
 
