@@ -2,9 +2,16 @@ from openai import OpenAI
 import streamlit as st
 import os
 from dotenv import load_dotenv
+<<<<<<< HEAD:agents/src/01_Chat.py
 from RAG.llm_calls import llm_unified
 from RAG.llm_calls import docs_input, images_input
 from RAG.ingestion import gateway_ingestion, encode_image
+=======
+from libs.RAG.llm_calls import llm_rag_openai, llm_rag_vision_openai, llm_generic_openai, llm_vision_openai 
+from libs.RAG.llm_calls import docs_input, images_input
+from libs.RAG.ingestion import gateway_ingestion, encode_image
+from libs.RAG.embeddings import create_embeddings_openai, create_embeddings_bedrock
+>>>>>>> 29038f1cfd54d7387b69ba2c4b87f7c61c30a3c3:agents/src/RAG.py
 load_dotenv()
 from io import StringIO
 import litellm
@@ -21,6 +28,7 @@ def lstr_to_generator(lstr_instance):
     for char in lstr_instance:
         yield char
 
+<<<<<<< HEAD:agents/src/01_Chat.py
 def handle_messages():
     # Initialize session state variables
     if "add_context" not in st.session_state:
@@ -31,6 +39,10 @@ def handle_messages():
         st.session_state["image_list"] = None
 
     # Add sidebar for model selection and context options
+=======
+def RAG_sidebar():
+    # Add sidebar for model selection
+>>>>>>> 29038f1cfd54d7387b69ba2c4b87f7c61c30a3c3:agents/src/RAG.py
     with st.sidebar:
         st.header("Model Selection")
         selected_model = st.selectbox("Choose a model:", available_models)
@@ -54,10 +66,31 @@ def handle_messages():
                     elif file.name.endswith((".jpeg", ".png")):
                         st.session_state["image_list"].append(images_input(page_content=encode_image(file), metadata={"source": file.name}))
                 
+<<<<<<< HEAD:agents/src/01_Chat.py
                 if not st.session_state["doc_list"]:
                     st.session_state["doc_list"] = None
                 if not st.session_state["image_list"]:
                     st.session_state["image_list"] = None
+=======
+                # Determine the case based on uploaded files
+                if st.session_state["has_docs"] and st.session_state["has_images"]:
+                    st.session_state["case"] = "docs_and_images"
+                elif st.session_state["has_docs"]:
+                    st.session_state["case"] = "docs_only"
+                elif st.session_state["has_images"]:
+                    st.session_state["case"] = "images_only"
+                else:
+                    st.session_state["case"] = "no_context"
+        else:
+            st.session_state["case"] = "no_context"
+
+def handle_messages():
+    # Initialize the "case" key in session state if it doesn't exist
+    if "case" not in st.session_state:
+        st.session_state["case"] = "no_context"
+
+    RAG_sidebar()
+>>>>>>> 29038f1cfd54d7387b69ba2c4b87f7c61c30a3c3:agents/src/RAG.py
 
     if "messages" not in st.session_state:
         st.session_state.messages = []

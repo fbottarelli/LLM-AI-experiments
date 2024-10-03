@@ -23,7 +23,6 @@ class MessagesState(MessagesState):
     pass
 
 
-from IPython.display import Image, display
 from langgraph.graph import StateGraph, START, END
 from PIL import Image as PILImage  # Import PIL Image
 
@@ -32,7 +31,7 @@ from PIL import Image as PILImage  # Import PIL Image
 
 def main():
         ## start streamlit app
-    st.title("ReAct Agent")
+    st.title("Calculator Agent")
 
     # List of available models
     available_models = [
@@ -91,32 +90,28 @@ def main():
 
     # Display previous chat messages
     for message in st.session_state.messages:
-        # st.write(message)
-        with st.chat_message(message.type):
-            st.markdown(message.content)
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
 
     # Capture user input
-    if prompt := st.chat_input("What is up?"):
-        st.session_state.messages.append(HumanMessage(content=prompt, name="user"))
+    if query := st.chat_input("What is up?"):
+        st.session_state.messages.append({"role": "user", "content": query})
         with st.chat_message("user"):
-            st.markdown(prompt)
+            st.markdown(query)
 
         with st.chat_message("assistant"):
             ### LLM call
-            # response = llm.invoke(st.session_state.messages)
             inputs = {"messages": st.session_state.messages}
-            config = {"configurable": {"thread_id": "2"}}
+            config = {"configurable": {"thread_id": "default_thread"}}  # Add this line
 
-            # async for msg, metadata in graph.stream(inputs, config=config, stream_mode="messages"):
-            #     if msg.content and not isinstance(msg, HumanMessage):
-            stream = graph.stream(inputs, config=config, stream_mode="values")
-            response = st.write_stream(stream)
-            # response = st.write_stream(stream) # ["messages"][-1].content
-            # response = graph.invoke(inputs)
-            # st.write(response["messages"][-1].content)
+            # simple answer
+            response = graph.invoke(inputs, config=config)  # Update this line
+
+            st.write(response["messages"][-1].content)
             # st.write(response["messages"][-1].tool_calls)
         
-        st.session_state.messages = response
+        # Update session state with the new messages
+        st.session_state.messages = [{"role": m.type, "content": m.content} for m in response["messages"]]
 
     # Add a delete button to clear messages
     if st.button("Delete Messages"):

@@ -3,22 +3,20 @@ openai
 python-dotenv
 streamlit
 gradio
-langgraph
 tavily-python
-# End of Selection
-
+# langchain
+langchain-qdrant
+langchain-openai
+langchain-community
+langgraph
+#langsmith
+langsmith
 # RAG
 qdrant-client
-
 # ell
-ell-ai
 anthropic
-
 # langfuse
 langfuse
-langsmith
-
-
 # ingestion
 pypdf
 pdf2image
