@@ -1,14 +1,13 @@
 from openai import OpenAI
 import os
-# prompt 
-import ell
+import litellm
+import dotenv
 
-# langsmith
-from langsmith import traceable
+dotenv.load_dotenv()
 
 
 available_models = ["openai/gpt-4o-mini", "openai/gpt-4o", "qwen/qwen-2.5-72b-instruct"]
-
+litellm_models = ["bedrock/anthropic.claude-3-5-sonnet-20240620-v1:0", "bedrock/anthropic.claude-3-haiku-20240307-v1:0"]
 
 # Normal openai calls
 from typing import Dict
@@ -21,81 +20,44 @@ class images_input(Dict):
     metadata: Dict
 
 
-
 def docs_to_context(docs_list: list[docs_input]):
     return "\n".join([f"Here is the page content: {doc.page_content}" for doc in docs_list])
 
 
+def llm_unified(query: str, model: str, docs_list: list[docs_input] = None, images_list: list[images_input] = None):
 
-@traceable
-def llm_generic_openai(query: str, model: str, client: OpenAI):
-    response = client.chat.completions.create(
-        model=model,
-        messages=[
-            {"role": "system", "content": "You are a helpful assistant."},
-            {"role": "user", "content": query}
-        ],
-        temperature=0.2,
-        stream=True
-    )
-    return response
+    retrieved_docs = []
 
-@traceable
-def llm_rag_openai(query: str, docs_list: list[docs_input], model: str, client: OpenAI):
-    context = docs_to_context(docs_list)
-    response = client.chat.completions.create(
-        model=model,
-        messages=[
-            {"role": "system", "content": "You are a helpful assistant. You will be provided with a query and a context. You will need to answer the query and use the context to help you answer the query if needed."},
-            {"role": "user", "content": f"Here is the context: {context}"},
-            {"role": "user", "content": f"Here is the query: {query}"},
-        ],
-        temperature=0.2,
-        stream=True
-    )
-    return response
+    messages = [
+        {"role": "system", "content": "You are a helpful assistant. You will be provided with a query"}
+    ]
 
-
-@traceable
-def llm_vision_openai(query: str, images_list: images_input, model: str, client: OpenAI):
-    response = client.chat.completions.create(
-        model=model,
-        messages=[
-            {"role": "system", "content": "You are a helpful assistant. You will be provided with an image and a query. You will need to answer the query and use the image to help you answer the query if needed."},
-            # Add images
-            ({
+    if images_list:
+        messages[0]["content"] += ", one or more images"
+        messages.extend([
+            {
                 "type": "image_url",
                 "image_url": {
-                    "url": f"data:image/jpeg;base64,{base64_image}"
-            },} for base64_image in images_list),
-            # Add query
-            {"role": "user", "content": f"Here is the query: {query}"},
-        ],
-        temperature=0.2,
-        stream=True
-    )
-    return response
+                    "url": f"data:image/jpeg;base64,{image.page_content}"
+                }
+            } for image in images_list
+        ])
 
+    if docs_list:
+        messages[0]["content"] += ", and context extracted from documents"
+        context = docs_to_context(docs_list)
+        messages.append({"role": "user", "content": f"Here is the context: {context}"})
 
-@traceable  
-def llm_rag_vision_openai(query: str, images_list: images_input, docs_list: list[docs_input], model: str, client: OpenAI):
-    context = docs_to_context(docs_list)
-    response = client.chat.completions.create(
+    messages[0]["content"] += ". You will need to answer the query and use the provided information to help you answer if needed."
+    messages.append({"role": "user", "content": f"Here is the query: {query}"})
+
+    response = litellm.completion(
         model=model,
-        messages=[
-            {"role": "system", "content": "You are a helpful assistant. You will be provided with a query, one or more images, and a context extracted from documents. You will need to answer the query and use the images and context to help you answer the query if needed."},
-            # Add images
-            ({
-                "type": "image_url",
-                "image_url": {
-                    "url": f"data:image/jpeg;base64,{base64_image}"
-            },} for base64_image in images_list),
-            # Add context
-            {"role": "user", "content": f"Here is the context: {context}"},
-            # Add query
-            {"role": "user", "content": f"Here is the query: {query}"}
-        ],
+        messages=messages,
         temperature=0.2,
         stream=True
     )
-    return response
+    
+    for chunk in response:
+        if chunk.choices and chunk.choices[0].delta.content:
+            yield chunk.choices[0].delta.content
